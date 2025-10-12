@@ -12,7 +12,7 @@ public class CameraController : MonoBehaviour
 
     [Header("Zooming")]
     [SerializeField] private float zoomSpeed = 10000f;
-    [SerializeField] private float minZoomHeight = 10f;
+    [SerializeField] private float minZoomHeight = 3f;
     [SerializeField] private float maxZoomHeight = 80f;
 
     [Header("Y Axis Rotation")]

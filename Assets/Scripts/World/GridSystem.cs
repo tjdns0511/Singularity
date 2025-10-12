@@ -3,21 +3,8 @@ using System.Collections.Generic;
 
 public class GridSystem : MonoBehaviour
 {
-    public static GridSystem Instance { get; private set; }
 
     private Dictionary<Vector3Int, BlockObject> blockGrid = new Dictionary<Vector3Int, BlockObject>();
-
-    private void Awake()
-    {
-        if (Instance == null && Instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            Instance = this;
-        }
-    }
 
     public bool PlaceBlock(BlockData data, Vector3Int position, Quaternion rotation)
     {
@@ -33,7 +20,8 @@ public class GridSystem : MonoBehaviour
             return false;
         }
 
-        GameObject newBlockInstance = Instantiate(data.prefab, position, rotation);
+        Vector3 worldPosition = new Vector3(position.x + 0.5f, position.y, position.z + 0.5f);
+        GameObject newBlockInstance = Instantiate(data.prefab, worldPosition, rotation);
         BlockObject blockObject = newBlockInstance.GetComponent<BlockObject>();
 
         if (blockObject == null)

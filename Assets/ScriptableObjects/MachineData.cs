@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 using static MachineIO;
 
 [CreateAssetMenu(fileName = "Mew Machine", menuName = "Singularity/Data/Block/Machine")]

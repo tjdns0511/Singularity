@@ -9,4 +9,6 @@ public abstract class BlockData : ScriptableObject
     public BlockType type;
     public GameObject prefab;
     public Vector3Int blockSize = Vector3Int.one;
+    public ItemData returnedItem;
+    public bool breakable = true;
 }

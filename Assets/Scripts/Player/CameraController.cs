@@ -1,14 +1,17 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
-    [Header("Panning")]
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 20f;
+    [SerializeField] private float movementSmoothness = 15f;
+    [SerializeField] private float zoomSmoothness = 30f;
 
     [Header("Zooming")]
-    [SerializeField] private float zoomSpeed = 100f;
+    [SerializeField] private float zoomSpeed = 10000f;
     [SerializeField] private float minZoomHeight = 10f;
     [SerializeField] private float maxZoomHeight = 80f;
 
@@ -22,7 +25,6 @@ public class CameraController : MonoBehaviour
 
     [Header("Key")]
     [SerializeField] private KeyCode rotationModifierKey = KeyCode.LeftControl;
-    [SerializeField] private float rotationSensitivity = 0.5f;
 
 
     [Header("Common Settiongs")]
@@ -30,39 +32,72 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float yDragThreshold = 100f;
     [SerializeField] private float xDragThreshold = 200f;
 
+    private Vector3 targetPosition;
     private float targetYRotation = 0f;
     private float targetXRotation = 90f;
+
     private Vector3 dragStartPosition;
     private bool isDragging = false;
+
     private Camera mainCamera;
 
     private void Awake()
     {
         mainCamera = GetComponent<Camera>();
         targetXRotation = maxRotateAngle;
+        transform.position = new Vector3(0f, 50f, 0f);
+        targetPosition = transform.position;
     }
 
-    void Update()
+    private void Update()
     {
         HandlePanning();
         HandleRotation();
         HandleZoom();
     }
 
+    private void LateUpdate()
+    {
+        float newX = Mathf.Lerp(transform.position.x, targetPosition.x, Time.deltaTime * movementSmoothness);
+        float newZ = Mathf.Lerp(transform.position.z, targetPosition.z, Time.deltaTime * movementSmoothness);
+        float newY = Mathf.Lerp(transform.position.y, targetPosition.y, Time.deltaTime * zoomSmoothness);
+
+        transform.position = new Vector3(newX, newY, newZ);
+
+        targetXRotation = Mathf.Clamp(targetXRotation, minRotateAngle, maxRotateAngle);
+        Quaternion targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, 0);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+    }
+
     private void HandlePanning()
     {
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
+        float horizontalInput = 0f;
+        float verticalInput = 0f;
+        if (Input.GetKey(KeyCode.A))
+        {
+            horizontalInput = -1f;
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            horizontalInput = 1f;
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            verticalInput = -1f;
+        }
+        else if (Input.GetKey(KeyCode.W))
+        {
+            verticalInput = 1f;
+        }
 
         Vector3 up = transform.up;
         Vector3 right = transform.right;
         up.y = 0;
         right.y = 0;
-        up.Normalize();
-        right.Normalize();
 
         Vector3 moveDirection = (up * verticalInput + right * horizontalInput);
-        transform.position += moveDirection * moveSpeed * Time.deltaTime;
+        moveDirection.Normalize();
+        targetPosition += moveSpeed * Time.deltaTime * moveDirection;
     }
 
     private void HandleRotation()
@@ -95,9 +130,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        targetXRotation = Mathf.Clamp(targetXRotation, minRotateAngle, maxRotateAngle);
-        Quaternion targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, 0);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+
     }
 
     private void HandleZoom()
@@ -105,12 +138,12 @@ public class CameraController : MonoBehaviour
         float scrollValue = Input.GetAxis("Mouse ScrollWheel");
         if (scrollValue != 0)
         {
-            Vector3 moveDirection = transform.forward * scrollValue * zoomSpeed * Time.deltaTime;
-            Vector3 newPosition = transform.position + moveDirection;
+            Vector3 moveDirection = Vector3.down * scrollValue * zoomSpeed * Time.deltaTime;
+            Vector3 newTargetPosition = targetPosition + moveDirection;
 
-            if (newPosition.y >= minZoomHeight && newPosition.y <= maxZoomHeight)
+            if (newTargetPosition.y >= minZoomHeight && newTargetPosition.y <= maxZoomHeight)
             {
-                transform.position = newPosition;
+                targetPosition = newTargetPosition;
             }
         }
     }

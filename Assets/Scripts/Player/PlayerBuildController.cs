@@ -64,7 +64,7 @@ public class PlayerBuildController : MonoBehaviour
         if (gridPlane.Raycast(ray, out float enter))
         {
             Vector3 worldPosition = ray.GetPoint(enter);
-            return new Vector3(worldPosition.x, worldPosition.y, worldPosition.z);
+            return new Vector3(worldPosition.x - 0.5f, worldPosition.y, worldPosition.z - 0.5f);
         }
 
         return new Vector3(-999, -999, -999);
@@ -96,7 +96,7 @@ public class PlayerBuildController : MonoBehaviour
 
         ghostBlockInstance.SetActive(true);
         Vector3Int gridPosition = Vector3Int.RoundToInt(worldPosition);
-        ghostBlockInstance.transform.position = new Vector3(gridPosition.x, gridPosition.y, gridPosition.z);
+        ghostBlockInstance.transform.position = new Vector3(gridPosition.x + 0.5f, gridPosition.y, gridPosition.z + 0.5f);
 
         bool canBuild = GameManagers.Instance.ChunkManager.IsPositionInActiveChunk(worldPosition) &&
                         GameManagers.Instance.GridSystem.GetBlockAt(gridPosition) == null;

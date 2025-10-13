@@ -44,7 +44,7 @@ public class ChunkManager : MonoBehaviour
 
     public bool IsPositionInActiveChunk(Vector3 worldPosition)
     {
-        Vector2Int chunkCoord = WorldToChunkCoords(worldPosition);
+        Vector2Int chunkCoord = WorldToChunkCoords(worldPosition + new Vector3(0.5f, 0, 0.5f));
         return activeChunkCoordinates.Contains(chunkCoord);
     }
 

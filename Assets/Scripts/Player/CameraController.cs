@@ -1,7 +1,5 @@
 using System;
-using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
@@ -11,8 +9,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float zoomSmoothness = 30f;
 
     [Header("Zooming")]
-    [SerializeField] private float zoomSpeed = 10000f;
-    [SerializeField] private float minZoomHeight = 3f;
+    [SerializeField] private float zoomSpeed = 20f;
+    [SerializeField] private float minZoomHeight = 6f;
     [SerializeField] private float maxZoomHeight = 80f;
 
     [Header("Y Axis Rotation")]
@@ -138,7 +136,7 @@ public class CameraController : MonoBehaviour
         float scrollValue = Input.GetAxis("Mouse ScrollWheel");
         if (scrollValue != 0)
         {
-            Vector3 moveDirection = Vector3.down * scrollValue * zoomSpeed * Time.deltaTime;
+            Vector3 moveDirection = Vector3.down * scrollValue * zoomSpeed;
             Vector3 newTargetPosition = targetPosition + moveDirection;
 
             if (newTargetPosition.y >= minZoomHeight && newTargetPosition.y <= maxZoomHeight)

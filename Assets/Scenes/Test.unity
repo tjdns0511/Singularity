@@ -229,7 +229,7 @@ MonoBehaviour:
   movementSmoothness: 15
   zoomSmoothness: 30
   zoomSpeed: 20
-  minZoomHeight: 2
+  minZoomHeight: 6
   maxZoomHeight: 80
   yRoataionSnapAngle: 45
   xRotationSnapAngle: 30

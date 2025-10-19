@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
 public class ChunkManager : MonoBehaviour
 {
@@ -9,11 +8,29 @@ public class ChunkManager : MonoBehaviour
 
     [SerializeField] private int chunkSize = 16;
 
-    [SerializeField] private GameObject chunkFloorPrefab;
+    [SerializeField] private GameObject chunkBaseBlockPrefab;
+
+    private const int CHUNK_BLOCK_HEIGHT = 16;
+
+    public HashSet<Vector2Int> GetActiveChunkCoordinates()
+    {
+        return activeChunkCoordinates;
+    }
+
+    public int GetChunkSize()
+    {
+        return chunkSize;
+    }
 
     private void Start()
     {
-        AddChunk(Vector2Int.zero);
+        for (int i = -10; i < 10; i++)
+        {
+            for (int j = -10; j < 10; j++)
+            {
+                AddChunk(new Vector2Int(i, j));
+            }
+        }
     }
 
     public void AddChunk(Vector2Int chunkCoord)
@@ -23,21 +40,22 @@ public class ChunkManager : MonoBehaviour
             activeChunkCoordinates.Add(chunkCoord);
             Debug.Log($"Chunk at {chunkCoord} has been activated.");
 
-            if (chunkFloorPrefab != null)
+            if (chunkBaseBlockPrefab != null)
             {
                 GameObject chunkParent = new GameObject($"Chunk ({chunkCoord.x}, {chunkCoord.y})");
                 chunkParent.transform.SetParent(this.transform);
 
-                Vector3 chunkOrigin = new Vector3(chunkCoord.x * chunkSize, 0, chunkCoord.y * chunkSize);
+                Vector3 chunkPosition = new Vector3(
+                    chunkCoord.x * chunkSize,
+                    -CHUNK_BLOCK_HEIGHT,
+                    chunkCoord.y * chunkSize
+                );
 
-                for (int x = 0; x < chunkSize; x++)
-                {
-                    for (int z = 0; z < chunkSize; z++)
-                    {
-                        Vector3 tilePosition = chunkOrigin + new Vector3(x, -1, z);
-                        Instantiate(chunkFloorPrefab, tilePosition, Quaternion.identity, chunkParent.transform);
-                    }
-                }
+                Instantiate(chunkBaseBlockPrefab, chunkPosition, Quaternion.identity, chunkParent.transform );
+            }
+            else
+            {
+                Debug.LogError("ChunkManager is missing a reference to 'chunkBaseBlockPrefab'");
             }
         }
     }

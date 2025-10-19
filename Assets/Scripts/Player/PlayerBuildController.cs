@@ -20,6 +20,11 @@ public class PlayerBuildController : MonoBehaviour
     private GameObject ghostBlockInstance;
     private Renderer ghostRenderer;
 
+    public int GetCurrentBuildLayer()
+    {
+        return currentBuildLayer;
+    }
+
     private void Awake()
     {
         mainCamera = Camera.main;
@@ -101,8 +106,7 @@ public class PlayerBuildController : MonoBehaviour
         if (gridPlane.Raycast(ray, out float enter))
         {
             Vector3 worldPosition = ray.GetPoint(enter);
-            Debug.Log(Vector3Int.FloorToInt(worldPosition));
-            return new Vector3(worldPosition.x, worldPosition.y, worldPosition.z);
+            return new Vector3(worldPosition.x, currentBuildLayer, worldPosition.z);
         }
 
         return new Vector3(-999, -999, -999);

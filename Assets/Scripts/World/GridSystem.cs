@@ -20,7 +20,7 @@ public class GridSystem : MonoBehaviour
             return false;
         }
 
-        Vector3 worldPosition = new Vector3(position.x + 0.5f, position.y, position.z + 0.5f);
+        Vector3 worldPosition = new Vector3(position.x, position.y, position.z);
         GameObject newBlockInstance = Instantiate(data.prefab, worldPosition, rotation);
         BlockObject blockObject = newBlockInstance.GetComponent<BlockObject>();
 

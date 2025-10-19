@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blockName: test
   type: 0
-  prefab: {fileID: 4046383633330260558, guid: 916f061ce8706be4890408e09d3b0d21, type: 3}
+  prefab: {fileID: 704772016294450272, guid: 916f061ce8706be4890408e09d3b0d21, type: 3}
   blockSize: {x: 1, y: 1, z: 1}
   returnedItem: {fileID: 0}
   breakable: 1

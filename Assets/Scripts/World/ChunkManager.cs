@@ -34,7 +34,7 @@ public class ChunkManager : MonoBehaviour
                 {
                     for (int z = 0; z < chunkSize; z++)
                     {
-                        Vector3 tilePosition = chunkOrigin + new Vector3(x + 0.5f, -1, z + 0.5f);
+                        Vector3 tilePosition = chunkOrigin + new Vector3(x, -1, z);
                         Instantiate(chunkFloorPrefab, tilePosition, Quaternion.identity, chunkParent.transform);
                     }
                 }
@@ -44,7 +44,7 @@ public class ChunkManager : MonoBehaviour
 
     public bool IsPositionInActiveChunk(Vector3 worldPosition)
     {
-        Vector2Int chunkCoord = WorldToChunkCoords(worldPosition + new Vector3(0.5f, 0, 0.5f));
+        Vector2Int chunkCoord = WorldToChunkCoords(worldPosition);
         return activeChunkCoordinates.Contains(chunkCoord);
     }
 

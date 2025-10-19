@@ -9,6 +9,11 @@ public class PlayerBuildController : MonoBehaviour
     [SerializeField] private Material ghostValidMaterial;
     [SerializeField] private Material ghostInvalidMaterial;
 
+    [Header("Layer Settings")]
+    [SerializeField] private int minBuildLayer = 0;
+    [SerializeField] private int maxBuildLayer = 19;
+    private int currentBuildLayer = 0;
+
     private Camera mainCamera;
     private Plane gridPlane = new Plane(Vector3.up, Vector3.zero);
 
@@ -19,12 +24,44 @@ public class PlayerBuildController : MonoBehaviour
     {
         mainCamera = Camera.main;
         InitializeGhostBlock();
+        HandleLayerInput();
+        UpdateBuildPlane();
     }
 
     private void Update()
     {
+        HandleLayerInput();
         UpdateGhostBlockPosition();
         HandleBuildInputs();
+    }
+
+    private void HandleLayerInput()
+    {
+        bool layerChanged = false;
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            currentBuildLayer++;
+            layerChanged = true;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            currentBuildLayer--;
+            layerChanged = true;
+        }
+
+        if (layerChanged)
+        {
+            currentBuildLayer = Mathf.Clamp(currentBuildLayer, minBuildLayer, maxBuildLayer);
+            UpdateBuildPlane();
+            Debug.Log($"Current Build Layer: {currentBuildLayer}");
+        }
+    }
+
+    private void UpdateBuildPlane()
+    {
+        gridPlane.SetNormalAndPosition( Vector3.up, new Vector3(0, currentBuildLayer, 0 ));
     }
 
     private void HandleBuildInput()
@@ -38,7 +75,7 @@ public class PlayerBuildController : MonoBehaviour
             return;
         }
 
-        Vector3Int gridPosition = Vector3Int.RoundToInt(worldPosition);
+        Vector3Int gridPosition = Vector3Int.FloorToInt(worldPosition);
         GameManagers.Instance.GridSystem.PlaceBlock(blockToBuild, gridPosition, Quaternion.identity);
     }
 
@@ -53,7 +90,7 @@ public class PlayerBuildController : MonoBehaviour
             return;
         }
 
-        Vector3Int gridPosition = Vector3Int.RoundToInt(worldPosition);
+        Vector3Int gridPosition = Vector3Int.FloorToInt(worldPosition);
         GameManagers.Instance.GridSystem.RemoveBlock(gridPosition);
     }
 
@@ -64,7 +101,8 @@ public class PlayerBuildController : MonoBehaviour
         if (gridPlane.Raycast(ray, out float enter))
         {
             Vector3 worldPosition = ray.GetPoint(enter);
-            return new Vector3(worldPosition.x - 0.5f, worldPosition.y, worldPosition.z - 0.5f);
+            Debug.Log(Vector3Int.FloorToInt(worldPosition));
+            return new Vector3(worldPosition.x, worldPosition.y, worldPosition.z);
         }
 
         return new Vector3(-999, -999, -999);
@@ -95,8 +133,8 @@ public class PlayerBuildController : MonoBehaviour
         }
 
         ghostBlockInstance.SetActive(true);
-        Vector3Int gridPosition = Vector3Int.RoundToInt(worldPosition);
-        ghostBlockInstance.transform.position = new Vector3(gridPosition.x + 0.5f, gridPosition.y, gridPosition.z + 0.5f);
+        Vector3Int gridPosition = Vector3Int.FloorToInt(worldPosition);
+        ghostBlockInstance.transform.position = new Vector3(gridPosition.x, gridPosition.y, gridPosition.z);
 
         bool canBuild = GameManagers.Instance.ChunkManager.IsPositionInActiveChunk(worldPosition) &&
                         GameManagers.Instance.GridSystem.GetBlockAt(gridPosition) == null;

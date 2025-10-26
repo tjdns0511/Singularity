@@ -251,7 +251,7 @@ GameObject:
   - component: {fileID: 848487304}
   - component: {fileID: 848487303}
   m_Layer: 0
-  m_Name: '@managers'
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -271,6 +271,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputManager: {fileID: 92406360450924625, guid: 068f895b189c1d242b0328aaf5226de4, type: 3}
   dataManager: {fileID: 4732248673027189874, guid: 0569badd8f0069e44957d381202feb17, type: 3}
+  gridSystem: {fileID: 9012059060268086968, guid: 0958a08ef3787d947b37e5ebfc7b8e88, type: 3}
+  chunkManager: {fileID: 690660704590340573, guid: 59f7cd1bb4fdbae42b347d8e3ef5cc28, type: 3}
+  uiManager: {fileID: 3581587598524829634, guid: 70b9b819e871b894dadc465f05701181, type: 3}
+  puzzleManager: {fileID: 3039089772225659482, guid: 6af5f9853efa24f4e81334220992d3f4, type: 3}
 --- !u!4 &848487304
 Transform:
   m_ObjectHideFlags: 0

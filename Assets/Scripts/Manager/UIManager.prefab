@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3391821502792406233
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 722848641915901941}
+  - component: {fileID: 3581587598524829634}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &722848641915901941
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3391821502792406233}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -17.865715, y: -36.964043, z: -23.681791}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3581587598524829634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3391821502792406233}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2092e2f6479d9c246ba06ff8bea86db8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hudPanel: {fileID: 0}
+  mainMenuPanel: {fileID: 0}
+  loadingScreenPanel: {fileID: 0}
+  pauseMenuPanel: {fileID: 0}
+  buildMenuPanel: {fileID: 0}
+  chunkInventoryPanel: {fileID: 0}
+  chunkCreationPanel: {fileID: 0}
+  loadingProgressBar: {fileID: 0}
+  buildItemListContainer: {fileID: 0}
+  buildItemButtonPrefab: {fileID: 0}
+  chunkItemListContainer: {fileID: 0}
+  chunkItemButtonPrefab: {fileID: 0}
+  elementSelectionContainer: {fileID: 0}
+  combineButton: {fileID: 0}
+  combinationResultText: {fileID: 0}
+  gameManager: {fileID: 0}
+  inputManager: {fileID: 0}
+  playerInventory: {fileID: 0}
+  playerBuildController: {fileID: 0}
+  puzzleManager: {fileID: 0}

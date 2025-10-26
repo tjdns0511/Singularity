@@ -3,5 +3,6 @@ public enum BlockType
     Block,
     Structural,
     Machine,
-    Transport
+    Transport,
+    Power
 }

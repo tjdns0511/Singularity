@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class ItemData : ResourceData
 {
-    public int ItemId; 
+    public string itemID;
     public int stackLimit = 99;
     public bool isConsumable = false;
     public Rarity rarity;

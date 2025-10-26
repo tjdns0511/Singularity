@@ -270,6 +270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputManager: {fileID: 92406360450924625, guid: 068f895b189c1d242b0328aaf5226de4, type: 3}
+  dataManager: {fileID: 4732248673027189874, guid: 0569badd8f0069e44957d381202feb17, type: 3}
 --- !u!4 &848487304
 Transform:
   m_ObjectHideFlags: 0
@@ -405,6 +406,12 @@ MonoBehaviour:
   rotationSpeed: 15
   yDragThreshold: 100
   xDragThreshold: 200
+  targetPosition: {x: 0, y: 0, z: 0}
+  targetYRotation: 0
+  targetXRotation: 90
+  dragStartPosition: {x: 0, y: 0, z: 0}
+  isDragging: 0
+  mainCamera: {fileID: 0}
 --- !u!114 &1926923249
 MonoBehaviour:
   m_ObjectHideFlags: 0

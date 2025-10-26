@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(fileName = "RecipeData", menuName = "Singularity/Data/Resource/Recipe")]
 public class RecipeData : ScriptableObject
@@ -7,12 +8,16 @@ public class RecipeData : ScriptableObject
     public class ItemAmount
     {
         public ItemData item;
-        public int amount;
+        [Min(1)]
+        public int amount = 1;
     }
 
-    public ItemAmount[] craftingRequirements;
-    public ItemAmount[] results;
+    [Header("Recipe Information")]
+    public string recipeID;
 
-    //public MachineData requiredMachine;
+    public List<ItemAmount> craftingRequirements;
+    public List<ItemAmount> results;
+
+    public MachineData requiredMachine;
     public float craftingTime = 1f;
 }

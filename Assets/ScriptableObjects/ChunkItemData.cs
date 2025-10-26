@@ -10,4 +10,10 @@ public class ChunkItemData : ItemData
     [Tooltip("자원 품질")]
     [Range(0f, 10f)]
     public float resourceQuality = 1.0f;
+
+    [Tooltip("청크 프리팹")]
+    public GameObject chunkPrefab;
+
+    [Tooltip("청크 특수 기능")]
+    public string terrainType = "Default";
 }

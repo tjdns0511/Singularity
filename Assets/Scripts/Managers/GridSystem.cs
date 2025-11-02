@@ -1,254 +1,223 @@
-// Description: 월드 그리드 상 블록 객체(BlockObject) 배치, 제거, 조회를 위한 싱글톤 매니저.
+// In Assets/Scripts/GridSystem.cs
 
-using UnityEngine;
 using System.Collections.Generic;
+using System.Linq; // .ToList() 사용
+using UnityEngine;
 
 /// <summary>
-/// 월드 3D 그리드 시스템 관리를 위한 싱글톤 클래스.
-/// 블록 객체(BlockObject) 배치, 제거, 조회 기능 제공.
+/// GDD 4.1 - 월드의 모든 블록 배치를 관리하는 중앙 시스템입니다.
+/// 블록의 설치, 제거, 조회, 저장을 담당합니다.
 /// </summary>
 public class GridSystem : Singleton<GridSystem>
 {
-    // 그리드 좌표별 배치된 BlockObject 저장을 위한 Dictionary.
+    [Header("Grid Settings")]
+    [Tooltip("그리드 셀 하나의 크기 (보통 1)")]
+    public float gridCellSize = 1f;
+
+    [Tooltip("그리드의 월드 원점 좌표")]
+    public Vector3 gridOrigin = Vector3.zero;
+
+    /// <summary>
+    /// GDD 4.1.1 - 현재 월드에 설치된 모든 블록을 저장하는 핵심 딕셔너리입니다.
+    /// </summary>
     private Dictionary<Vector3Int, BlockObject> blockGrid = new Dictionary<Vector3Int, BlockObject>();
 
-    // 생성된 블록들을 묶을 부모 Transform (씬 정리용).
-    [SerializeField] private Transform blockParentTransform;
+    // --- 1. 핵심 기능 (설치/제거/조회) ---
 
     /// <summary>
-    /// 싱글톤 초기화 및 블록 부모 Transform 설정을 위한 메서드.
+    /// GDD 4.1.2 - 지정된 좌표에 블록 설치를 시도합니다.
+    /// PlayerBuildController가 호출합니다.
     /// </summary>
-    protected override void Awake()
+    public bool PlaceBlock(BlockData data, Vector3Int position, Quaternion rotation)
     {
-        base.Awake();
-        if (blockParentTransform == null)
+        if (data == null)
         {
-            GameObject blockParentObj = new GameObject("Blocks");
-            blockParentTransform = blockParentObj.transform;
-            blockParentTransform.SetParent(this.transform);
+            Debug.LogError("[GridSystem] 설치할 BlockData가 null입니다.");
+            return false;
         }
-    }
 
-    /// <summary>
-    /// 지정된 그리드 좌표에 블록 배치를 위한 메서드.
-    /// </summary>
-    /// <param name="blockData">배치할 블록 정보</param>
-    /// <param name="position">배치할 그리드 좌표</param>
-    /// <param name="rotation">배치할 블록 회전값</param>
-    /// <returns>배치 성공 여부</returns>
-    public bool PlaceBlock(BlockData blockData, Vector3Int position, Quaternion rotation)
-    {
-        // 배치 유효성 검사 (점유 여부, 데이터 유효성)
+        // GDD 4.1.2 - 유효성 검사
         if (IsOccupied(position))
         {
-            Debug.LogWarning($"Cannot place block at {position}: Already occupied.");
-            return false;
-        }
-        if (blockData == null || blockData.prefab == null)
-        {
-            Debug.LogError($"Cannot place block at {position}: Invalid BlockData or missing prefab.");
+            Debug.Log($"[GridSystem] {position} 위치는 이미 사용 중입니다.");
             return false;
         }
 
-        // 블록 인스턴스화 및 이름 설정
-        GameObject blockInstance = Instantiate(blockData.prefab, position, rotation, blockParentTransform);
-        blockInstance.name = $"{blockData.blockName} ({position.x}, {position.y}, {position.z})";
+        // 1. GDD 4.2.1 - DataManager의 'prefab'을 기반으로 월드에 생성
+        Vector3 worldPos = GridToWorldPosition(position);
+        GameObject blockInstance = Instantiate(data.prefab, worldPos, rotation);
+        blockInstance.name = $"{data.displayName}_{position}";
 
-        // BlockObject 컴포넌트 가져오기 및 초기화
+        // 2. BlockObject 컴포넌트 가져오기 (모든 블록 프리팹에 있어야 함)
         BlockObject blockObject = blockInstance.GetComponent<BlockObject>();
         if (blockObject == null)
         {
-            Debug.LogWarning($"Prefab for '{blockData.name}' missing BlockObject. Adding dynamically.", blockInstance);
-            blockObject = blockInstance.AddComponent<BlockObject>();
+            Debug.LogError($"[GridSystem] {data.name} 프리팹에 BlockObject.cs 컴포넌트가 없습니다!");
+            Destroy(blockInstance);
+            return false;
         }
-        blockObject.Initialize(blockData); // TODO: 상태 데이터(BlockStateData) 전달 로직 추가 필요.
 
-        // 그리드 데이터에 추가
-        blockGrid[position] = blockObject;
-        Debug.Log($"Placed block '{blockData.blockName}' at {position}");
-        // TODO: 블록 배치 완료 이벤트 발행 (EventManager)
+        // 3. GDD 4.2.1 - 새 블록의 정적/동적 데이터 설정
+        blockObject.data = data;
+
+        // (GDD 4.2.2) MachineData인 경우 MachineStateData로 생성
+        // (7단계) if (data is MachineData)
+        // {
+        //     blockObject.state = new MachineStateData(); 
+        // }
+        // else
+        // {
+        //     blockObject.state = new BlockStateData();
+        // }
+
+        // (임시) 기본 BlockStateData 생성
+        blockObject.state = new BlockStateData();
+
+        blockObject.state.dataId = data.ID; // GDD 4.8.2 - 저장/로드를 위한 ID 기록
+        blockObject.state.position = position;
+        blockObject.state.rotation = rotation;
+
+
+        // 4. GDD 4.1.1 - 그리드 딕셔너리에 등록
+        blockGrid.Add(position, blockObject);
+
+        // GDD 4.1.2 - (VFX/SFX)
+        // VFXManager.Instance.PlayEffect("BlockPlace", worldPos);
+        // SoundManager.Instance.PlaySound("BlockPlace");
+
+        // GDD 4.1.2 - (이벤트)
+        // EventManager.TriggerEvent("OnBlockPlaced", blockObject);
+
         return true;
     }
 
     /// <summary>
-    /// 지정된 그리드 좌표의 블록 제거를 위한 메서드.
+    /// GDD 4.1.2 - 지정된 좌표의 블록을 제거합니다.
+    /// PlayerBuildController가 호출합니다.
     /// </summary>
-    /// <param name="position">제거할 블록의 그리드 좌표</param>
-    /// <returns>제거 성공 여부</returns>
     public bool RemoveBlock(Vector3Int position)
     {
-        if (blockGrid.TryGetValue(position, out BlockObject blockToRemove))
+        BlockObject blockToRemove = GetBlockAt(position);
+        if (blockToRemove == null)
         {
-            blockGrid.Remove(position);
-            Destroy(blockToRemove.gameObject); // 게임 오브젝트 파괴
-            Debug.Log($"Removed block at {position}");
-            // TODO: 블록 제거 완료 이벤트 발행 (EventManager)
-            return true;
+            return false; // 제거할 블록이 없음
         }
-        else
-        {
-            Debug.LogWarning($"Cannot remove block at {position}: No block found.");
-            return false;
-        }
+
+        // 1. GDD 4.1.2 - 그리드 딕셔너리에서 제거
+        blockGrid.Remove(position);
+
+        // 2. GDD 4.1.2 - 월드에서 게임 오브젝트 파괴
+        Destroy(blockToRemove.gameObject);
+
+        // GDD 4.1.2 - (VFX/SFX)
+        // VFXManager.Instance.PlayEffect("BlockRemove", GridToWorldPosition(position));
+
+        // (GDD 4.1.2) 이벤트 발행
+        // EventManager.TriggerEvent("OnBlockRemoved", position, blockToRemove.data);
+
+        return true;
     }
 
     /// <summary>
-    /// 지정된 그리드 좌표의 BlockObject를 반환하기 위한 메서드. 없으면 null 반환.
+    /// GDD 4.1.2 - 지정된 좌표에 있는 BlockObject를 반환합니다.
     /// </summary>
-    /// <param name="position">조회할 그리드 좌표</param>
-    /// <returns>BlockObject 또는 null</returns>
     public BlockObject GetBlockAt(Vector3Int position)
     {
-        blockGrid.TryGetValue(position, out BlockObject blockObject);
-        return blockObject;
+        if (blockGrid.TryGetValue(position, out BlockObject block))
+        {
+            return block;
+        }
+        return null;
     }
 
     /// <summary>
-    /// 지정된 그리드 좌표 점유 여부 확인을 위한 메서드.
+    /// GDD 4.1.2 - 해당 좌표가 이미 사용 중인지 확인합니다.
     /// </summary>
-    /// <param name="position">확인할 그리드 좌표</param>
-    /// <returns>점유 여부</returns>
     public bool IsOccupied(Vector3Int position)
     {
         return blockGrid.ContainsKey(position);
     }
 
-    /// <summary>
-    /// [미구현] 특정 청크 내 모든 블록 객체 리스트 반환을 위한 메서드.
-    /// </summary>
-    /// <param name="chunkCoord">블록을 조회할 청크 좌표 (ChunkManager 좌표계와 일치 필요)</param>
-    /// <returns>해당 청크 내 BlockObject 리스트</returns>
-    public List<BlockObject> GetBlocksInChunk(Vector3Int chunkCoord)
-    {
-        // TODO: ChunkManager 연동 및 정확한 범위 계산 로직 구현 필요.
-        int chunkSize = ChunkManager.Instance?.ChunkSize ?? 16;
-        Vector3 chunkWorldOrigin = new Vector3(chunkCoord.x * chunkSize, chunkCoord.y * chunkSize, chunkCoord.z * chunkSize); // HACK: 임시 좌표 계산
-        List<BlockObject> blocksInChunk = new List<BlockObject>();
-        // TODO: 범위 체크 로직 추가 예정
-        return blocksInChunk;
-    }
-
-    // --- 저장/로드 관련 ---
+    // --- 2. 저장 & 불러오기 (GDD 4.8) ---
 
     /// <summary>
-    /// 현재 그리드의 모든 블록 상태 데이터 반환을 위한 메서드 (저장용).
+    /// GDD 4.8.2 - SaveLoadManager가 호출할 함수.
+    /// 현재 그리드에 있는 모든 블록의 상태 데이터를 리스트로 반환합니다.
     /// </summary>
-    /// <returns>좌표-상태 데이터 Dictionary</returns>
-    public Dictionary<Vector3Int, BlockStateData> GetAllBlockStates()
+    public List<BlockStateData> GetSaveData()
     {
-        Dictionary<Vector3Int, BlockStateData> allStates = new Dictionary<Vector3Int, BlockStateData>();
-        // TODO: BlockObject.GetStateData() 구현 및 호출 로직 필요.
-        Debug.LogWarning("GetAllBlockStates needs implementation. Returning empty dictionary.");
-        return allStates;
+        // blockGrid의 모든 BlockObject에서 'state'만 추출하여 리스트로 만듭니다.
+        return blockGrid.Values.Select(block => block.state).ToList();
     }
 
     /// <summary>
-    /// 저장된 데이터로부터 그리드 상태 복원을 위한 메서드 (로드용).
+    /// GDD 4.8.3 - SaveLoadManager가 호출할 함수.
+    /// 저장된 블록 상태 리스트를 받아와 월드를 복원합니다.
     /// </summary>
-    /// <param name="savedStates">복원할 좌표-상태 데이터 Dictionary</param>
-    public void RestoreAllBlocks(Dictionary<Vector3Int, BlockStateData> savedStates)
+    public void LoadSaveData(List<BlockStateData> data)
     {
-        ClearGrid(); // 복원 전 기존 그리드 초기화
-        if (savedStates == null || savedStates.Count == 0) return;
-        Debug.Log($"Attempting to restore {savedStates.Count} blocks...");
+        if (data == null) return;
 
-        foreach (var pair in savedStates)
+        ClearWorld(); // GDD 4.8.3 - 복원 전 기존 씬 정리
+
+        foreach (BlockStateData state in data)
         {
-            Vector3Int position = pair.Key;
-            BlockStateData state = pair.Value;
-
-            if (state == null || string.IsNullOrEmpty(state.blockDataId)) continue;
-
-            // DataManager에서 BlockData 찾기
-            BlockData blockData = DataManager.Instance?.GetBlockData(state.blockDataId);
-            if (blockData != null)
+            // 1. GDD 4.8.3 - ID를 이용해 DataManager에서 원본 SO 데이터를 찾습니다.
+            BlockData blockData = DataManager.Instance.GetBlockData(state.dataId);
+            if (blockData == null)
             {
-                Quaternion rotation = Quaternion.Euler(0, state.rotationY, 0); // 상태에서 회전값 가져오기 (예시)
-                bool placed = PlaceBlock(blockData, position, rotation); // 블록 배치
-
-                if (placed)
-                {
-                    BlockObject placedBlock = GetBlockAt(position);
-                    // TODO: placedBlock?.SetStateData(state) 호출 로직 구현 필요.
-                    if (placedBlock == null) Debug.LogError($"Failed to get placed block at {position} after PlaceBlock returned true.");
-                    else Debug.LogWarning($"Need SetStateData in BlockObject for {blockData.name} at {position}");
-                }
+                Debug.LogWarning($"[GridSystem] 로드 실패: ID({state.dataId})에 해당하는 BlockData를 찾을 수 없습니다.");
+                continue;
             }
-            else
+
+            // 2. GDD 4.8.3 - 저장된 정보로 블록을 다시 설치합니다.
+            bool success = PlaceBlock(blockData, state.position, state.rotation);
+
+            if (success)
             {
-                Debug.LogError($"BlockData '{state.blockDataId}' not found for restore at {position}.");
+                // 3. GDD 4.8.3 - (중요) PlaceBlock이 만든 기본 state를
+                // 파일에서 로드한 'state' (버퍼, 타이머 등 포함)로 덮어씌웁니다.
+                GetBlockAt(state.position).state = state;
             }
         }
-        Debug.Log($"Finished restoring blocks. {blockGrid.Count} blocks in grid.");
     }
 
     /// <summary>
-    /// 그리드의 모든 블록 제거 및 초기화를 위한 메서드.
+    /// GDD 4.8.3 - 로드하기 전, 현재 월드의 모든 블록을 파괴하고 딕셔너리를 비웁니다.
     /// </summary>
-    public void ClearGrid()
+    public void ClearWorld()
     {
-        if (blockGrid.Count == 0) return; // 이미 비어있으면 스킵
-
-        List<Vector3Int> positions = new List<Vector3Int>(blockGrid.Keys);
-        foreach (var pos in positions)
+        // (중요) ToList()로 복사본을 만들어야 순회 중 딕셔너리 변경 오류가 안 생깁니다.
+        foreach (BlockObject block in blockGrid.Values.ToList())
         {
-            RemoveBlock(pos); // 내부에서 Destroy 호출
+            Destroy(block.gameObject);
         }
 
-        Debug.Log("Grid cleared.");
-    }
-}
-
-
-// --- 보조 클래스 ---
-// NOTE: 별도 파일 분리 권장 (BlockObject.cs, BlockStateData.cs).
-
-/// <summary>
-/// 월드 배치 블록 오브젝트의 기본 MonoBehaviour 클래스.
-/// </summary>
-public class BlockObject : MonoBehaviour
-{
-    /// <summary>
-    /// 블록의 정적 정보 참조용 프로퍼티.
-    /// </summary>
-    public BlockData Data { get; private set; }
-    // TODO: 동적 상태 데이터 (BlockStateData State) 프로퍼티 추가 필요.
-
-    /// <summary>
-    /// 블록 오브젝트 초기화를 위한 가상 메서드.
-    /// </summary>
-    /// <param name="data">블록 데이터</param>
-    public virtual void Initialize(BlockData data)
-    {
-        this.Data = data;
-        // TODO: 상태 데이터(State) 객체 생성 및 초기화 로직.
+        blockGrid.Clear();
     }
 
-    // TODO: 저장/로드 위한 상태 Get/Set 가상 메서드 구현 필요 (GetStateData, SetStateData).
-}
+    // --- 3. 좌표 변환 헬퍼 ---
 
-/// <summary>
-/// 블록 동적 상태 저장/로드를 위한 직렬화 가능 데이터 클래스.
-/// </summary>
-[System.Serializable]
-public class BlockStateData
-{
     /// <summary>
-    /// 블록 종류 식별용 ID (BlockData.name 등).
+    /// 월드 좌표(예: Raycast Hit)를 그리드 좌표(Vector3Int)로 변환합니다.
     /// </summary>
-    public string blockDataId;
-    /// <summary>
-    /// 블록 Y축 회전값 (예시).
-    /// </summary>
-    public float rotationY;
-    // TODO: 필요한 다른 상태 변수 추가 (인벤토리, 타이머 등).
-
-    public BlockStateData() { } // 기본 생성자
-
-    public BlockStateData(string id) // ID 받는 생성자 (예시)
+    public Vector3Int WorldToGridPosition(Vector3 worldPosition)
     {
-        blockDataId = id;
-        rotationY = 0;
-        // TODO: 다른 상태 변수 기본값 초기화.
+        Vector3 relativePos = worldPosition - gridOrigin;
+        int x = Mathf.FloorToInt(relativePos.x / gridCellSize);
+        int y = Mathf.FloorToInt(relativePos.y / gridCellSize);
+        int z = Mathf.FloorToInt(relativePos.z / gridCellSize);
+        return new Vector3Int(x, y, z);
+    }
+
+    /// <summary>
+    /// 그리드 좌표(Vector3Int)를 블록을 생성할 월드 좌표로 변환합니다.
+    /// </summary>
+    public Vector3 GridToWorldPosition(Vector3Int gridPosition)
+    {
+        float x = (gridPosition.x * gridCellSize) + gridOrigin.x + (gridCellSize * 0.5f); // 중앙 정렬
+        float y = (gridPosition.y * gridCellSize) + gridOrigin.y + (gridCellSize * 0.5f); // 중앙 정렬
+        float z = (gridPosition.z * gridCellSize) + gridOrigin.z + (gridCellSize * 0.5f); // 중앙 정렬
+        return new Vector3(x, y, z);
     }
 }

@@ -171,11 +171,11 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// 청크 좌표(Vector2Int)를 해당 청크의 월드 기준 위치(Vector3, Y=0)로 변환하기 위한 메서드.
+    /// 청크 좌표(Vector2Int)를 해당 청크의 월드 기준 위치(Vector3, Y=-16)로 변환하기 위한 메서드.
     /// </summary>
     public Vector3 ChunkCoordsToWorldPosition(Vector2Int chunkCoord)
     {
-        return new Vector3(chunkCoord.x * chunkSize, 0, chunkCoord.y * chunkSize);
+        return new Vector3(chunkCoord.x * chunkSize, -16, chunkCoord.y * chunkSize);
     }
 
     // --- 저장/로드 관련 ---

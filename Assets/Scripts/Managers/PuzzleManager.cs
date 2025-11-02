@@ -1,177 +1,146 @@
-// Description: 청크 생성 미니게임 로직(조합 판정) 관리를 위한 싱글톤 매니저.
+// In Assets/Scripts/PuzzleManager.cs
 
-using UnityEngine;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using UnityEngine;
 
 /// <summary>
-/// 청크 생성 미니게임 로직(Rarity 기반 조합 판정) 관리를 위한 싱글톤 클래스.
+/// GDD 3.3 '고대 기술 융합' (청크 생성 미니게임)의 핵심 로직을 관리합니다.
+/// UIManager로부터 조합 시도를 받아 레시피와 대조하고, 결과를 PlayerInventory에 추가합니다.
 /// </summary>
+public struct CombinationResult
+{
+    public bool success;      // 조합 성공 여부 (C등급 이상)
+    public string message;    // UI에 표시될 메시지
+    public ItemData resultItem; // 생성된 ChunkItemData 또는 ByproductData
+    public string grade;        // S, A, B, C, F 등급
+}
+
 public class PuzzleManager : Singleton<PuzzleManager>
 {
-    // 조합 결과 아이템을 받을 PlayerInventory 참조.
-    [SerializeField] private PlayerInventory playerInventory;
-
-    // 조합 완전 실패 시 반환할 기본 Rarity 값.
-    private const Rarity DEFAULT_FAIL_RARITY = Rarity.Common;
+    /// <summary>
+    /// UIManager가 조합 결과를 UI에 반영할 수 있도록 알리는 이벤트입니다.
+    /// </summary>
+    public static event Action<CombinationResult> OnCombinationAttempted;
 
     /// <summary>
-    /// 싱글톤 초기화 및 PlayerInventory 참조 확인을 위한 메서드.
+    /// UIManager의 '조합' 버튼 클릭 시 호출됩니다.
     /// </summary>
-    protected override void Awake()
+    public void AttemptCombination(List<ItemData> elements)
     {
-        base.Awake();
-        // PlayerInventory 참조 자동 찾기 (Inspector에서 할당되지 않은 경우)
-        if (playerInventory == null) playerInventory = FindAnyObjectByType<PlayerInventory>();
-        // 최종 확인
-        if (playerInventory == null) Debug.LogError("PuzzleManager requires a PlayerInventory reference!");
-    }
-
-    /// <summary>
-    /// 플레이어의 원소 조합 시도 처리 및 결과(Rarity, 아이템) 반환을 위한 메서드.
-    /// </summary>
-    /// <param name="attemptedCombination">플레이어가 시도한 원소(ItemData) 리스트</param>
-    /// <returns>조합 결과 Rarity 및 생성된 ItemData (실패 시 null)</returns>
-    public (Rarity resultRarity, ItemData resultItem) AttemptCombination(List<ItemData> attemptedCombination)
-    {
-        if (attemptedCombination == null || attemptedCombination.Count == 0)
+        if (elements == null || elements.Count == 0)
         {
-            return (DEFAULT_FAIL_RARITY, null);
+            OnCombinationAttempted?.Invoke(new CombinationResult
+            {
+                success = false,
+                message = "원소를 넣어주세요.",
+                resultItem = null,
+                grade = "F"
+            });
+            return;
         }
 
-        // DataManager에서 모든 청크 레시피 로드
-        List<ChunkRecipeData> allChunkRecipes = DataManager.Instance?.GetAllChunkRecipeData() ?? new List<ChunkRecipeData>();
+        // 1. DataManager에서 모든 레시피 정보를 가져옵니다.
+        List<ChunkRecipeData> allRecipes = DataManager.Instance.GetAllChunkRecipes(); // (DataManager에 이 함수 구현 필요)
 
-        ChunkRecipeData bestMatchRecipe = null;
-        float highestSimilarity = -1f; // 유사도 (0.0 ~ 1.0)
-        bool isPerfectMatch = false;
+        CombinationResult bestResult;
+        bestResult.success = false;
+        bestResult.message = "조합 실패... 부산물이 생성되었습니다.";
+        bestResult.resultItem = DataManager.Instance.GetDefaultByproduct(); // (실패 시 기본 부산물 - DataManager에 구현 필요)
+        bestResult.grade = "F";
 
-        // 1. 가장 유사도가 높은 레시피 찾기 (완벽 일치 우선)
-        foreach (var recipe in allChunkRecipes)
+        float bestScore = 0f;
+
+        // 2. 모든 레시피와 대조하여 가장 점수가 높은 결과를 찾습니다.
+        foreach (ChunkRecipeData recipe in allRecipes)
         {
-            if (IsPerfectMatch(attemptedCombination, recipe.requiredElements)) // 완벽 일치 확인
-            {
-                bestMatchRecipe = recipe;
-                highestSimilarity = 1.0f;
-                isPerfectMatch = true;
-                break; // 완벽 일치 시 탐색 종료
-            }
+            float score = CalculateCombinationScore(elements, recipe.requiredElements);
 
-            // 완벽하지 않으면 유사도 계산 및 최고 유사도 레시피 갱신
-            float currentSimilarity = CalculateSimilarity(attemptedCombination, recipe.requiredElements);
-            if (currentSimilarity > highestSimilarity)
+            if (score > bestScore)
             {
-                highestSimilarity = currentSimilarity;
-                bestMatchRecipe = recipe;
-            }
-        }
+                bestScore = score;
 
-        // 2. 결과 판정 및 아이템 지급
-        if (bestMatchRecipe != null)
-        {
-            // Debug.Log($"Best match recipe: {bestMatchRecipe.name} (Similarity: {highestSimilarity})"); // 로그 최소화
-
-            // 완벽 일치 + 특별 보상 청크가 있는 경우
-            if (isPerfectMatch && bestMatchRecipe.perfectMatchResultChunk != null)
-            {
-                AwardItem(bestMatchRecipe.perfectMatchResultChunk);
-                // 완벽 일치 시 최고 Rarity 반환 (레시피 정의 기준)
-                Rarity topRarity = (bestMatchRecipe.rarityOutcomes != null && bestMatchRecipe.rarityOutcomes.Count > 0)
-                                   ? bestMatchRecipe.rarityOutcomes[0].rarity // 첫 번째(최고 유사도) Rarity 사용
-                                   : Rarity.Legendary; // 기본값 (rarityOutcomes 없거나 비어있을 경우)
-                return (topRarity, bestMatchRecipe.perfectMatchResultChunk);
-            }
-
-            // 유사도 기반 Rarity 결과 판정 (rarityOutcomes 리스트는 similarity 내림차순 정렬 가정)
-            if (bestMatchRecipe.rarityOutcomes != null)
-            {
-                foreach (var outcome in bestMatchRecipe.rarityOutcomes)
+                // GDD 3.3.1 - 점수에 따라 등급 결정
+                if (score >= 1.0f) // 100% 일치
                 {
-                    if (highestSimilarity >= outcome.minSimilarity) // 최소 유사도 충족 시
-                    {
-                        if (outcome.resultChunk != null) // 해당 Rarity 결과 청크가 정의되어 있으면
-                        {
-                            AwardItem(outcome.resultChunk);
-                            return (outcome.rarity, outcome.resultChunk); // 해당 청크 지급
-                        }
-                        else
-                        {
-                            // 결과 청크 없으면 더 낮은 Rarity 볼 필요 없이 부산물 처리로 넘어감
-                            break;
-                        }
-                    }
+                    bestResult.success = true;
+                    bestResult.message = $"완벽한 성공! (S)";
+                    bestResult.resultItem = recipe.sGradeChunk; // S등급 청크
+                    bestResult.grade = "S";
+                }
+                else if (score >= 0.75f) // 75% 이상
+                {
+                    bestResult.success = true;
+                    bestResult.message = "성공! (A)";
+                    bestResult.resultItem = recipe.aGradeChunk; // A등급 청크
+                    bestResult.grade = "A";
+                }
+                else if (score >= 0.5f) // 50% 이상
+                {
+                    bestResult.success = true;
+                    bestResult.message = "그럭저럭... (B)";
+                    bestResult.resultItem = recipe.bGradeChunk; // B등급 청크
+                    bestResult.grade = "B";
+                }
+                else if (score >= 0.25f) // 25% 이상
+                {
+                    bestResult.success = true;
+                    bestResult.message = "부족한 조합 (C)";
+                    bestResult.resultItem = recipe.cGradeChunk; // C등급 청크
+                    bestResult.grade = "C";
+                }
+                else // 그 외 점수는 F등급 부산물
+                {
+                    bestResult.success = false;
+                    bestResult.message = "조합 실패... 부산물이 생성되었습니다.";
+                    bestResult.resultItem = recipe.failureByproduct; // 레시피별 고유 부산물
+                    bestResult.grade = "F";
                 }
             }
+        }
 
-            // Rarity 기준 미달 또는 결과 청크 부재 시 -> 부산물 지급 시도
-            if (bestMatchRecipe.byproductItem != null)
+        // 3. 결과 아이템을 인벤토리에 추가합니다.
+        if (bestResult.resultItem != null)
+        {
+            if (bestResult.resultItem is ChunkItemData chunk)
             {
-                AwardItem(bestMatchRecipe.byproductItem);
-                return (Rarity.Common, bestMatchRecipe.byproductItem); // 부산물은 Common Rarity 부여 (임시)
+                // 결과가 청크 아이템이면 청크 인벤토리로
+                PlayerInventory.Instance.AddChunkItem(chunk);
+            }
+            else
+            {
+                // 결과가 부산물(일반 Item)이면 핫바로 (혹은 나중에 만들 주 인벤토리로)
+                PlayerInventory.Instance.AddItemToHotbar(bestResult.resultItem, 1);
             }
         }
 
-        // 3. 일치 레시피 없음 또는 지급할 아이템 없음 -> 완전 실패
-        return (DEFAULT_FAIL_RARITY, null);
+        // 4. UIManager에 최종 결과를 이벤트로 발행합니다.
+        OnCombinationAttempted?.Invoke(bestResult);
     }
 
     /// <summary>
-    /// PlayerInventory에 아이템 추가를 위한 내부 헬퍼 메서드.
+    /// GDD 3.3.1 - 조합 유사도를 계산합니다. (GDD 1.5.0 - 숫자야구/원소조합)
     /// </summary>
-    private void AwardItem(ItemData itemToAward, int quantity = 1)
+    /// <returns>유사도 점수 (0.0f ~ 1.0f)</returns>
+    private float CalculateCombinationScore(List<ItemData> input, List<ItemData> recipe)
     {
-        if (itemToAward == null || playerInventory == null) return;
+        // TODO: GDD 1.5.0의 '숫자 야구' 또는 '원소 조합' 방식 구체화 필요
+        
+        // (임시) 단순 개수 및 포함 여부 체크 로직 (GDD 1.5.1)
+        if (recipe == null || recipe.Count == 0) return 0f;
 
-        if (itemToAward is ChunkItemData chunkItem)
+        if (input.Count != recipe.Count) return 0.1f; // 개수만 틀리면 10% 점수
+
+        int correctElements = 0;
+        for (int i = 0; i < recipe.Count; i++)
         {
-            playerInventory.AddChunkItem(chunkItem, quantity);
+            // (임시) 순서까지 정확히 맞아야 함
+            if (input[i] == recipe[i])
+            {
+                correctElements++;
+            }
         }
-        else
-        {
-            // playerInventory.AddItem(itemToAward, quantity); // TODO: 일반 아이템 추가 함수 호출 필요
-            Debug.LogWarning($"PlayerInventory needs AddItem method for item '{itemToAward.name}'.");
-        }
-    }
 
-    /// <summary>
-    /// 두 아이템 리스트 완벽 일치 여부 확인을 위한 내부 메서드. (순서 고려)
-    /// </summary>
-    /// <returns>일치 여부</returns>
-    private bool IsPerfectMatch(List<ItemData> attempt, List<ItemData> recipeElements)
-    {
-        // TODO: 조합 순서 무시 로직 필요 시 수정 (예: Count 확인 후 Set 비교)
-        if (attempt == null || recipeElements == null || attempt.Count != recipeElements.Count)
-        {
-            return false;
-        }
-        for (int i = 0; i < attempt.Count; i++)
-        {
-            if (attempt[i] != recipeElements[i]) return false; // ScriptableObject는 직접 비교 가능
-        }
-        return true;
-    }
-
-    /// <summary>
-    /// 두 아이템 리스트 간 유사도 계산을 위한 내부 메서드 (0.0 ~ 1.0).
-    /// 현재 Jaccard Index (고유 원소 종류 기준) 사용.
-    /// </summary>
-    /// <returns>계산된 유사도 값</returns>
-    private float CalculateSimilarity(List<ItemData> attempt, List<ItemData> recipeElements)
-    {
-        // TODO: 필요 시 다른 유사도 계산 로직으로 변경 (예: 순서, 개수 가중치 등)
-        if (recipeElements == null || recipeElements.Count == 0) return (attempt == null || attempt.Count == 0) ? 1.0f : 0f;
-        if (attempt == null || attempt.Count == 0) return 0f;
-
-        // 고유 원소 Set 생성
-        HashSet<ItemData> attemptSet = new HashSet<ItemData>(attempt);
-        HashSet<ItemData> recipeSet = new HashSet<ItemData>(recipeElements);
-
-        // 교집합(Intersection)과 합집합(Union) 크기 계산
-        int intersection = attemptSet.Intersect(recipeSet).Count();
-        int union = attemptSet.Union(recipeSet).Count();
-
-        // Jaccard Index 계산: (교집합 크기) / (합집합 크기) 두 집합 사이의 유사도 계산
-        if (union == 0) return 1f; // 둘 다 빈 경우 (이론상 발생 안 함)
-        return (float)intersection / union;
+        return (float)correctElements / recipe.Count; // 1.0f (S등급) ~ 0.0f (F등급)
     }
 }

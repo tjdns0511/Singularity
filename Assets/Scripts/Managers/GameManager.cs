@@ -57,6 +57,7 @@ public class GameManager : Singleton<GameManager>
     {
         base.Awake();
         EnsureManagersExist();
+        Debug.Log(CurrentState.ToString());
     }
 
     /// <summary>
@@ -70,10 +71,12 @@ public class GameManager : Singleton<GameManager>
         if (currentScene == "GameScene")
         {
             ChangeState(GameState.Playing);
+            Debug.Log("PlayingState");
         }
         else if (currentScene == "MainMenuScene")
         {
             ChangeState(GameState.MainMenu);
+            Debug.Log("MainMenuState");
         }
         else
         {
@@ -104,8 +107,6 @@ public class GameManager : Singleton<GameManager>
     /// <param name="newState">변경할 새로운 게임 상태</param>
     public void ChangeState(GameState newState)
     {
-        if (CurrentState == newState) return;
-
         ExitState(CurrentState);
         CurrentState = newState;
         Debug.Log($"Game State Changed to: {newState}");

@@ -1,30 +1,31 @@
-// Description: 게임 ScriptableObject 데이터 로드 및 관리를 위한 싱글톤 매니저.
+// In Assets/Scripts/DataManager.cs
 
-using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq; // .ToList() 사용
+using UnityEngine;
 
 /// <summary>
-/// 게임 ScriptableObject 데이터 로드 및 접근 관리를 위한 싱글톤 클래스.
+/// GDD 4.4 - 게임의 모든 정적 데이터(ScriptableObject)를 로드하고 캐싱합니다.
+/// 다른 모든 매니저들이 데이터에 접근할 수 있는 통로 역할을 합니다.
 /// </summary>
 public class DataManager : Singleton<DataManager>
 {
-    // 타입별 데이터 저장을 위한 Dictionary. Key는 SO 에셋 파일 이름(string).
-    private Dictionary<string, BlockData> blockDataDict = new Dictionary<string, BlockData>();
-    private Dictionary<string, ItemData> itemDataDict = new Dictionary<string, ItemData>();
-    private Dictionary<string, ChunkItemData> chunkItemDataDict = new Dictionary<string, ChunkItemData>();
-    private Dictionary<string, ChunkRecipeData> chunkRecipeDataDict = new Dictionary<string, ChunkRecipeData>();
-    // TODO: 필요한 다른 SO 타입 Dictionary 추가 (FluidData, RecipeData 등)
+    // --- 1. ScriptableObject 에셋 경로 (Resources 폴더 기준) ---
+    // (이 경로는 실제 프로젝트 구조에 맞게 수정해야 합니다)
+    private const string ITEM_DATA_PATH = "ScriptableObjects/Items";
+    private const string BLOCK_DATA_PATH = "ScriptableObjects/Blocks";
+    private const string CHUNK_ITEM_DATA_PATH = "ScriptableObjects/ChunkItems";
+    private const string CHUNK_RECIPE_DATA_PATH = "ScriptableObjects/ChunkRecipes";
 
-    // Public 읽기 전용 접근자.
-    public IReadOnlyDictionary<string, BlockData> BlockDatas => blockDataDict;
-    public IReadOnlyDictionary<string, ItemData> ItemDatas => itemDataDict;
-    public IReadOnlyDictionary<string, ChunkItemData> ChunkItemDatas => chunkItemDataDict;
-    public IReadOnlyDictionary<string, ChunkRecipeData> ChunkRecipeDatas => chunkRecipeDataDict;
+    // --- 2. 캐시된 데이터 딕셔너리 (GDD 4.4.1) ---
+    // GDD 4.4.2 - ID를 Key로 사용하여 데이터에 빠르게 접근합니다.
+    private Dictionary<string, ItemData> itemDataDic = new Dictionary<string, ItemData>();
+    private Dictionary<string, BlockData> blockDataDic = new Dictionary<string, BlockData>();
+    private Dictionary<string, ChunkItemData> chunkItemDataDic = new Dictionary<string, ChunkItemData>();
+    private Dictionary<string, ChunkRecipeData> chunkRecipeDataDic = new Dictionary<string, ChunkRecipeData>();
 
-    /// <summary>
-    /// 싱글톤 초기화 및 모든 데이터 로드를 위한 메서드.
-    /// </summary>
+    // --- 3. 초기화 ---
+
     protected override void Awake()
     {
         base.Awake();
@@ -32,80 +33,108 @@ public class DataManager : Singleton<DataManager>
     }
 
     /// <summary>
-    /// Resources 폴더 하위 모든 ScriptableObject 데이터 로드를 위한 메서드.
+    /// Resources 폴더에서 모든 SO 데이터를 로드하여 딕셔너리에 캐싱합니다.
     /// </summary>
     private void LoadAllData()
     {
-        LoadDataAtPath<BlockData>("Data/Blocks", blockDataDict);
-        LoadDataAtPath<ItemData>("Data/Items", itemDataDict);
-        LoadDataAtPath<ChunkRecipeData>("Data/ChunkRecipes", chunkRecipeDataDict);
-        // TODO: 다른 SO 타입 로드 추가
+        // GDD 4.4.1 - 모든 데이터 로드 및 캐싱
+        LoadDataToDictionary(ITEM_DATA_PATH, itemDataDic);
+        LoadDataToDictionary(BLOCK_DATA_PATH, blockDataDic);
+        LoadDataToDictionary(CHUNK_ITEM_DATA_PATH, chunkItemDataDic);
+        LoadDataToDictionary(CHUNK_RECIPE_DATA_PATH, chunkRecipeDataDic);
 
-        // 필요할 때 ItemDataDict에서 ChunkItemData만 분리하여 chunkItemDataDict 구성
-        chunkItemDataDict = itemDataDict
-            .Where(pair => pair.Value is ChunkItemData)
-            .ToDictionary(pair => pair.Key, pair => pair.Value as ChunkItemData);
-
-        Debug.Log($"DataManager loaded: {blockDataDict.Count} Blocks, {itemDataDict.Count} Items (incl. subtypes), {chunkItemDataDict.Count} ChunkItems, {chunkRecipeDataDict.Count} ChunkRecipes");
+        Debug.Log($"[DataManager] 데이터 로드 완료: Items({itemDataDic.Count}), Blocks({blockDataDic.Count}), Recipes({chunkRecipeDataDic.Count})");
     }
 
     /// <summary>
-    /// 지정된 경로에서 특정 타입 SO 에셋 로드 후 Dictionary에 추가하기 위한 제네릭 메서드.
+    /// 제네릭을 사용한 공용 데이터 로드 함수
+    /// (수정됨: data.id 필드 대신 data.ID 프로퍼티를 사용)
     /// </summary>
-    /// <typeparam name="T">로드할 SO 타입</typeparam>
-    /// <param name="path">Resources 폴더 내 상대 경로</param>
-    /// <param name="dictionary">데이터 저장할 Dictionary</param>
-    private void LoadDataAtPath<T>(string path, Dictionary<string, T> dictionary) where T : ScriptableObject
+    private void LoadDataToDictionary<T>(string path, Dictionary<string, T> dictionary) where T : ScriptableObject, IDataWithId
     {
-        var loadedAssets = Resources.LoadAll<T>(path);
-        int count = 0;
-        foreach (var asset in loadedAssets)
+        T[] allData = Resources.LoadAll<T>(path);
+
+        foreach (T data in allData)
         {
-            // ScriptableObject.name 은 에셋 파일 이름과 동일.
-            if (!dictionary.ContainsKey(asset.name))
+            // (수정) data.id가 아닌 data.ID (인터페이스 프로퍼티)를 사용합니다.
+            if (string.IsNullOrEmpty(data.ID))
             {
-                dictionary.Add(asset.name, asset);
-                count++;
+                Debug.LogWarning($"[DataManager] ID가 없는 데이터 발견: {data.name} ({path})");
+                continue;
+            }
+
+            // (수정) data.id가 아닌 data.ID (인터페이스 프로퍼티)를 사용합니다.
+            if (!dictionary.ContainsKey(data.ID))
+            {
+                dictionary.Add(data.ID, data);
+            }
+            else
+            {
+                Debug.LogWarning($"[DataManager] 중복 ID 발견: {data.ID} ({path})");
             }
         }
     }
 
-    // --- 데이터 접근 함수 ---
+    // --- 4. 공용 데이터 접근 함수 (Getter) (GDD 4.4.2) ---
 
-    /// <summary>
-    /// 이름(에셋 파일명)으로 BlockData 반환을 위한 메서드. 없으면 null 반환.
-    /// </summary>
-    public BlockData GetBlockData(string name)
+    // UIManager (빌드 메뉴)가 사용
+    public List<BlockData> GetAllBlockData()
     {
-        blockDataDict.TryGetValue(name, out BlockData data);
-        return data;
+        return blockDataDic.Values.ToList();
     }
 
-    /// <summary>
-    /// 이름(에셋 파일명)으로 ItemData (하위 타입 포함) 반환을 위한 메서드. 없으면 null 반환.
-    /// </summary>
-    public ItemData GetItemData(string name)
+    // PuzzleManager (조합)가 사용
+    public List<ChunkRecipeData> GetAllChunkRecipes()
     {
-        itemDataDict.TryGetValue(name, out ItemData data);
-        return data;
+        return chunkRecipeDataDic.Values.ToList();
     }
 
-    /// <summary>
-    /// 이름(에셋 파일명)으로 ChunkItemData 반환을 위한 메서드. 없으면 null 반환.
-    /// </summary>
-    public ChunkItemData GetChunkItemData(string name)
+    // SaveLoadManager (블록 로드)가 사용
+    public BlockData GetBlockData(string id)
     {
-        chunkItemDataDict.TryGetValue(name, out ChunkItemData data);
-        return data;
+        if (blockDataDic.TryGetValue(id, out BlockData data))
+        {
+            return data;
+        }
+        Debug.LogError($"[DataManager] ID에 해당하는 BlockData를 찾을 수 없습니다: {id}");
+        return null;
     }
 
-    /// <summary>
-    /// 로드된 모든 ChunkRecipeData 리스트 반환을 위한 메서드. (PuzzleManager 등에서 사용)
-    /// </summary>
-    public List<ChunkRecipeData> GetAllChunkRecipeData()
+    // PlayerInventory (핫바/아이템 로드)가 사용
+    public ItemData GetItemData(string id)
     {
-        return chunkRecipeDataDict.Values.ToList();
+        if (itemDataDic.TryGetValue(id, out ItemData data))
+        {
+            return data;
+        }
+        Debug.LogError($"[DataManager] ID에 해당하는 ItemData를 찾을 수 없습니다: {id}");
+        return null;
     }
 
-    // TODO: 다른 SO 타입 접근 함수 추가 (GetFluidData, GetRecipeData 등)
+    // PlayerInventory (청크 로드)가 사용
+    public ChunkItemData GetChunkItemData(string id)
+    {
+        if (chunkItemDataDic.TryGetValue(id, out ChunkItemData data))
+        {
+            return data;
+        }
+        Debug.LogError($"[DataManager] ID에 해당하는 ChunkItemData를 찾을 수 없습니다: {id}");
+        return null;
+    }
+
+    // PuzzleManager (조합 실패)가 사용
+    public ItemData GetDefaultByproduct()
+    {
+        // (임시) 'junk'라는 ID를 가진 기본 부산물 아이템을 반환
+        return GetItemData("byproduct_junk");
+    }
 }
+// **적용 예시 (BlockData.cs):**
+// public abstract class BlockData : ScriptableObject, IDataWithId
+// {
+//     [Header("Data ID")]
+//     public string id; // 이 필드가 IDataWithId 인터페이스를 충족시킵니다.
+//     string IDataWithId.id => id; // 인터페이스 명시적 구현
+// 
+//     // ... (displayName, icon, prefab 등 기존 변수) ...
+// }

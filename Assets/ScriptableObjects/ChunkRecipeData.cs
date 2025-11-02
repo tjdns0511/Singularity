@@ -1,53 +1,39 @@
-using UnityEngine;
-using System.Collections.Generic;
+// In Assets/ScriptableObjects/ChunkRecipeData.cs
 
-// Rarity enum 정의 (Assets/Enums/Rarity.cs 에 있어야 함 - 예시)
-// public enum Rarity { None = 0, Common = 1, Uncommon = 2, Rare = 3, Epic = 4, Legendary = 5 }
+using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
-/// 청크 생성 미니게임 전용 레시피 데이터입니다. (Rarity 기반)
-/// 원소 조합 및 결과 Rarity를 정의합니다.
+/// GDD 3.3.1 - '고대 기술 융합' (청크 생성 미니게임)의 레시피 데이터입니다.
+/// PuzzleManager가 조합 성공/실패를 판정할 때 사용합니다.
 /// </summary>
-[CreateAssetMenu(fileName = "New Chunk Recipe", menuName = "Singularity/Data/Chunk Recipe (Rarity)")]
-public class ChunkRecipeData : ScriptableObject
+[CreateAssetMenu(fileName = "NewChunkRecipe", menuName = "Singularity/Data/Chunk Recipe Data")]
+public class ChunkRecipeData : ScriptableObject, IDataWithId
 {
-    [System.Serializable] // Inspector 노출 및 직렬화
-    public class RarityOutcome
-    {
-        public Rarity rarity = Rarity.Common; // 기본값 설정
+    [Header("Data ID")]
+    [Tooltip("DataManager에서 이 데이터를 찾기 위한 고유 ID")]
+    public string id;
 
-        [Range(0f, 1f)]
-        public float minSimilarity = 0.5f; // 예시 기본값
-        public ChunkItemData resultChunk;
-    }
+    // DataManager의 IDataWithId 인터페이스 구현
+    public string ID => id;
 
-    [Header("Chunk Recipe Information")]
-    public string recipeId;
-
+    [Header("Combination")]
+    [Tooltip("S등급을 받기 위한 필수 원소 조합 (GDD 3.3.1)")]
     public List<ItemData> requiredElements;
 
-    [Header("Combination Outcomes by Rarity")]
-    public List<RarityOutcome> rarityOutcomes;
+    [Header("Results (GDD 3.3.1)")]
+    [Tooltip("100% 일치 시 생성될 청크 아이템")]
+    public ChunkItemData sGradeChunk;
 
-    // 완벽 일치(Similarity 1.0) 시 특별 보상 (선택 사항)
-    public ChunkItemData perfectMatchResultChunk;
+    [Tooltip("75%~ 일치 시 생성될 청크 아이템")]
+    public ChunkItemData aGradeChunk;
 
-    [Header("Byproduct (Optional)")]
-    public ItemData byproductItem;
+    [Tooltip("50%~ 일치 시 생성될 청크 아이템")]
+    public ChunkItemData bGradeChunk;
 
-    // 기획 문서 3.3: 부산물 분석 힌트 (선택 사항)
-    // public List<string> hints;
+    [Tooltip("25%~ 일치 시 생성될 청크 아이템")]
+    public ChunkItemData cGradeChunk;
 
-    /// <summary>
-    /// Editor에서 데이터 검증 시 사용 (선택 사항)
-    /// RarityOutcomes 리스트가 minSimilarity 내림차순으로 정렬되었는지 확인
-    /// </summary>
-    private void OnValidate()
-    {
-        if (rarityOutcomes != null && rarityOutcomes.Count > 1)
-        {
-            // Sort the list by minSimilarity descending to ensure correct logic in PuzzleManager
-            rarityOutcomes.Sort((a, b) => b.minSimilarity.CompareTo(a.minSimilarity));
-        }
-    }
+    [Tooltip("조합 실패 또는 낮은 점수일 때 생성될 부산물 (GDD 3.3.1)")]
+    public ItemData failureByproduct;
 }

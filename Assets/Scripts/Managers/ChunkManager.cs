@@ -1,29 +1,30 @@
-// Description: °ÔÀÓ ¿ùµåÀÇ Ã»Å© »ı¼º, ¹èÄ¡, Á¦°Å, °ü¸®¸¦ À§ÇÑ ½Ì±ÛÅæ ¸Å´ÏÀú.
+using System;
+// Description: ê²Œì„ ì›”ë“œì˜ ì²­í¬ ìƒì„±, ë°°ì¹˜, ì œê±°, ê´€ë¦¬ë¥¼ ìœ„í•œ ì‹±ê¸€í†¤ ë§¤ë‹ˆì €.
 
 using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// °ÔÀÓ ¿ùµå Ã»Å© »ı¼º, ¹èÄ¡, Á¦°Å, °ü¸®¸¦ À§ÇÑ ½Ì±ÛÅæ Å¬·¡½º.
+/// ê²Œì„ ì›”ë“œ ì²­í¬ ìƒì„±, ë°°ì¹˜, ì œê±°, ê´€ë¦¬ë¥¼ ìœ„í•œ ì‹±ê¸€í†¤ í´ë˜ìŠ¤.
 /// </summary>
 public class ChunkManager : Singleton<ChunkManager>
 {
-    // ¼³Ä¡µÈ Ã»Å© ÁÂÇ¥(XZ Æò¸é ±âÁØ) °ü¸®¸¦ À§ÇÑ HashSet.
+    // ì„¤ì¹˜ëœ ì²­í¬ ì¢Œí‘œ(XZ í‰ë©´ ê¸°ì¤€) ê´€ë¦¬ë¥¼ ìœ„í•œ HashSet.
     private HashSet<Vector2Int> placedChunkCoordinates = new HashSet<Vector2Int>();
-    // ·ÎµåµÈ Ã»Å© °´Ã¼ °ü¸®¸¦ À§ÇÑ Dictionary (¿ùµå ½ºÆ®¸®¹Ö ½Ã ÇÊ¿ä).
+    // ë¡œë“œëœ ì²­í¬ ê°ì²´ ê´€ë¦¬ë¥¼ ìœ„í•œ Dictionary (ì›”ë“œ ìŠ¤íŠ¸ë¦¬ë° ì‹œ í•„ìš”).
     private Dictionary<Vector2Int, ChunkObject> loadedChunks = new Dictionary<Vector2Int, ChunkObject>();
 
     [Header("Chunk Settings")]
-    [SerializeField] private int chunkSize = 16; // Ã»Å© °¡·Î/¼¼·Î Å©±â (Á¤»ç°¢Çü °¡Á¤).
-    [SerializeField] private Transform chunkParentTransform; // »ı¼ºµÈ Ã»Å© ¿ÀºêÁ§Æ®µéÀÇ ºÎ¸ğ Transform.
+    [SerializeField] private int chunkSize = 16; // ì²­í¬ ê°€ë¡œ/ì„¸ë¡œ í¬ê¸° (ì •ì‚¬ê°í˜• ê°€ì •).
+    [SerializeField] private Transform chunkParentTransform; // ìƒì„±ëœ ì²­í¬ ì˜¤ë¸Œì íŠ¸ë“¤ì˜ ë¶€ëª¨ Transform.
 
     /// <summary>
-    /// ¿ÜºÎ¿¡¼­ Ã»Å© Å©±â¸¦ ÀĞ±â À§ÇÑ ÇÁ·ÎÆÛÆ¼.
+    /// ì™¸ë¶€ì—ì„œ ì²­í¬ í¬ê¸°ë¥¼ ì½ê¸° ìœ„í•œ í”„ë¡œí¼í‹°.
     /// </summary>
     public int ChunkSize => chunkSize;
 
     /// <summary>
-    /// ½Ì±ÛÅæ ÃÊ±âÈ­ ¹× Ã»Å© ºÎ¸ğ Transform ¼³Á¤À» À§ÇÑ ¸Ş¼­µå.
+    /// ì‹±ê¸€í†¤ ì´ˆê¸°í™” ë° ì²­í¬ ë¶€ëª¨ Transform ì„¤ì •ì„ ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
     protected override void Awake()
     {
@@ -36,14 +37,14 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// ÁöÁ¤µÈ À§Ä¡¿¡ Ã»Å© ¼³Ä¡ °¡´É ¿©ºÎ È®ÀÎÀ» À§ÇÑ ¸Ş¼­µå. (´Ù¸¥ Ã»Å©¿Í °ãÄ¡´ÂÁö µî)
+    /// ì§€ì •ëœ ìœ„ì¹˜ì— ì²­í¬ ì„¤ì¹˜ ê°€ëŠ¥ ì—¬ë¶€ í™•ì¸ì„ ìœ„í•œ ë©”ì„œë“œ. (ë‹¤ë¥¸ ì²­í¬ì™€ ê²¹ì¹˜ëŠ”ì§€ ë“±)
     /// </summary>
-    /// <param name="position">¼³Ä¡ ½Ãµµ À§Ä¡ÀÇ ¿ùµå ±×¸®µå ÁÂÇ¥ (Vector3Int)</param>
-    /// <returns>¼³Ä¡ °¡´É ¿©ºÎ</returns>
+    /// <param name="position">ì„¤ì¹˜ ì‹œë„ ìœ„ì¹˜ì˜ ì›”ë“œ ê·¸ë¦¬ë“œ ì¢Œí‘œ (Vector3Int)</param>
+    /// <returns>ì„¤ì¹˜ ê°€ëŠ¥ ì—¬ë¶€</returns>
     public bool IsPlacementValid(Vector3Int position)
     {
         Vector2Int chunkCoord = WorldToChunkCoords(position);
-        // ÀÌ¹Ì ÇØ´ç ÁÂÇ¥¿¡ Ã»Å©°¡ ÀÖ´ÂÁö È®ÀÎ
+        // ì´ë¯¸ í•´ë‹¹ ì¢Œí‘œì— ì²­í¬ê°€ ìˆëŠ”ì§€ í™•ì¸
         if (placedChunkCoordinates.Contains(chunkCoord))
         {
             return false;
@@ -52,16 +53,21 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// ÁöÁ¤µÈ À§Ä¡¿¡ Ã»Å© ¹èÄ¡¸¦ À§ÇÑ ¸Ş¼­µå.
-    /// </summary>
-    /// <param name="chunkItemData">¼³Ä¡ÇÒ Ã»Å© ¾ÆÀÌÅÛ µ¥ÀÌÅÍ</param>
-    /// <param name="position">¼³Ä¡ÇÒ À§Ä¡ÀÇ ¿ùµå ±×¸®µå ÁÂÇ¥ (Vector3Int)</param>
-    /// <returns>¹èÄ¡ ¼º°ø ¿©ºÎ</returns>
+        string chunkLabel = !string.IsNullOrWhiteSpace(chunkItemData.resourceName)
+            ? chunkItemData.resourceName
+            : (!string.IsNullOrWhiteSpace(chunkItemData.displayName)
+                ? chunkItemData.displayName
+                : chunkItemData.name);
+        chunkInstance.name = $"Chunk ({chunkCoord.x}, {chunkCoord.y}) - {chunkLabel}";
+        Debug.Log($"Placed chunk '{chunkLabel}' at coords {chunkCoord}");
+    /// <param name="chunkItemData">ì„¤ì¹˜í•  ì²­í¬ ì•„ì´í…œ ë°ì´í„°</param>
+    /// <param name="position">ì„¤ì¹˜í•  ìœ„ì¹˜ì˜ ì›”ë“œ ê·¸ë¦¬ë“œ ì¢Œí‘œ (Vector3Int)</param>
+    /// <returns>ë°°ì¹˜ ì„±ê³µ ì—¬ë¶€</returns>
     public bool PlaceChunk(ChunkItemData chunkItemData, Vector3Int position)
     {
         Vector2Int chunkCoord = WorldToChunkCoords(position);
 
-        if (!IsPlacementValid(position)) // À¯È¿¼º ÀçÈ®ÀÎ
+        if (!IsPlacementValid(position)) // ìœ íš¨ì„± ì¬í™•ì¸
         {
             return false;
         }
@@ -71,56 +77,56 @@ public class ChunkManager : Singleton<ChunkManager>
             return false;
         }
 
-        // Ã»Å© ±âÁØ ¿ùµå À§Ä¡ °è»ê ¹× ÀÎ½ºÅÏ½ºÈ­
+        // ì²­í¬ ê¸°ì¤€ ì›”ë“œ ìœ„ì¹˜ ê³„ì‚° ë° ì¸ìŠ¤í„´ìŠ¤í™”
         Vector3 chunkWorldPosition = ChunkCoordsToWorldPosition(chunkCoord);
         GameObject chunkInstance = Instantiate(chunkItemData.chunkPrefab, chunkWorldPosition, Quaternion.identity, chunkParentTransform);
         chunkInstance.name = $"Chunk ({chunkCoord.x}, {chunkCoord.y}) - {chunkItemData.resourceName}";
 
-        // ChunkObject ÄÄÆ÷³ÍÆ® °¡Á®¿À±â ¹× ÃÊ±âÈ­
+        // ChunkObject ì»´í¬ë„ŒíŠ¸ ê°€ì ¸ì˜¤ê¸° ë° ì´ˆê¸°í™”
         ChunkObject chunkObject = chunkInstance.GetComponent<ChunkObject>();
         if (chunkObject == null)
         {
-            // HACK: ÇÁ¸®ÆÕ¿¡ ChunkObject°¡ ¾øÀ» °æ¿ì µ¿Àû Ãß°¡ (±ÇÀåÇÏÁö ¾ÊÀ½).
+            // HACK: í”„ë¦¬íŒ¹ì— ChunkObjectê°€ ì—†ì„ ê²½ìš° ë™ì  ì¶”ê°€ (ê¶Œì¥í•˜ì§€ ì•ŠìŒ).
             Debug.LogWarning($"Prefab for '{chunkItemData.name}' missing ChunkObject. Adding dynamically.", chunkInstance);
             chunkObject = chunkInstance.AddComponent<ChunkObject>();
         }
-        chunkObject.Initialize(chunkCoord, chunkItemData); // TODO: »óÅÂ µ¥ÀÌÅÍ(ChunkStateData) Àü´Ş ·ÎÁ÷ Ãß°¡ ÇÊ¿ä.
+        chunkObject.Initialize(chunkCoord, chunkItemData); // TODO: ìƒíƒœ ë°ì´í„°(ChunkStateData) ì „ë‹¬ ë¡œì§ ì¶”ê°€ í•„ìš”.
 
-        // °ü¸® ¸ñ·Ï¿¡ Ãß°¡
+        // ê´€ë¦¬ ëª©ë¡ì— ì¶”ê°€
         placedChunkCoordinates.Add(chunkCoord);
-        loadedChunks.Add(chunkCoord, chunkObject); // ·ÎµåµÈ Ã»Å© ¸ñ·Ï¿¡µµ Ãß°¡
+        loadedChunks.Add(chunkCoord, chunkObject); // ë¡œë“œëœ ì²­í¬ ëª©ë¡ì—ë„ ì¶”ê°€
 
         Debug.Log($"Placed chunk '{chunkItemData.resourceName}' at coords {chunkCoord}");
-        // TODO: Ã»Å© ¹èÄ¡ ¿Ï·á ÀÌº¥Æ® ¹ßÇà
+        // TODO: ì²­í¬ ë°°ì¹˜ ì™„ë£Œ ì´ë²¤íŠ¸ ë°œí–‰
         return true;
     }
 
     /// <summary>
-    /// ÁöÁ¤µÈ À§Ä¡ÀÇ Ã»Å© Á¦°Å¸¦ À§ÇÑ ¸Ş¼­µå.
+    /// ì§€ì •ëœ ìœ„ì¹˜ì˜ ì²­í¬ ì œê±°ë¥¼ ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
-    /// <param name="position">Á¦°ÅÇÒ Ã»Å©°¡ ÀÖ´Â ¿ùµå ±×¸®µå ÁÂÇ¥ (Vector3Int)</param>
-    /// <returns>Á¦°Å ¼º°ø ¿©ºÎ</returns>
+    /// <param name="position">ì œê±°í•  ì²­í¬ê°€ ìˆëŠ” ì›”ë“œ ê·¸ë¦¬ë“œ ì¢Œí‘œ (Vector3Int)</param>
+    /// <returns>ì œê±° ì„±ê³µ ì—¬ë¶€</returns>
     public bool RemoveChunk(Vector3Int position)
     {
         Vector2Int chunkCoord = WorldToChunkCoords(position);
 
         if (placedChunkCoordinates.Contains(chunkCoord))
         {
-            // TODO: Ã»Å© ³» ºí·Ï Á¦°Å ·ÎÁ÷ ÇÊ¿ä (GridSystem.GetBlocksInChunk / RemoveBlock ¿¬µ¿).
+            // TODO: ì²­í¬ ë‚´ ë¸”ë¡ ì œê±° ë¡œì§ í•„ìš” (GridSystem.GetBlocksInChunk / RemoveBlock ì—°ë™).
             // List<BlockObject> blocksInChunk = GridSystem.Instance.GetBlocksInChunk(chunkCoord);
             // foreach(var block in blocksInChunk) { GridSystem.Instance.RemoveBlock(Vector3Int.FloorToInt(block.transform.position)); }
             Debug.LogWarning("RemoveChunk needs implementation for removing blocks within the chunk via GridSystem.");
 
-            // °ü¸® ¸ñ·Ï¿¡¼­ Á¦°Å
+            // ê´€ë¦¬ ëª©ë¡ì—ì„œ ì œê±°
             placedChunkCoordinates.Remove(chunkCoord);
             if (loadedChunks.TryGetValue(chunkCoord, out ChunkObject chunkToRemove))
             {
                 loadedChunks.Remove(chunkCoord);
-                Destroy(chunkToRemove.gameObject); // °ÔÀÓ ¿ÀºêÁ§Æ® ÆÄ±«
+                Destroy(chunkToRemove.gameObject); // ê²Œì„ ì˜¤ë¸Œì íŠ¸ íŒŒê´´
             }
 
             Debug.Log($"Removed chunk at coords {chunkCoord}");
-            // TODO: Ã»Å© Á¦°Å ¿Ï·á ÀÌº¥Æ® ¹ßÇà
+            // TODO: ì²­í¬ ì œê±° ì™„ë£Œ ì´ë²¤íŠ¸ ë°œí–‰
             return true;
         }
         else
@@ -131,20 +137,20 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// ÁÖ¾îÁø ¿ùµå ÁÂÇ¥°¡ È°¼º(¼³Ä¡µÈ) Ã»Å© ³»ºÎ¿¡ ÀÖ´ÂÁö È®ÀÎÇÏ±â À§ÇÑ ¸Ş¼­µå.
+    /// ì£¼ì–´ì§„ ì›”ë“œ ì¢Œí‘œê°€ í™œì„±(ì„¤ì¹˜ëœ) ì²­í¬ ë‚´ë¶€ì— ìˆëŠ”ì§€ í™•ì¸í•˜ê¸° ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
-    /// <param name="worldPosition">È®ÀÎÇÒ ¿ùµå ÁÂÇ¥ (Vector3)</param>
-    /// <returns>È°¼º Ã»Å© ³»ºÎ ¿©ºÎ</returns>
+    /// <param name="worldPosition">í™•ì¸í•  ì›”ë“œ ì¢Œí‘œ (Vector3)</param>
+    /// <returns>í™œì„± ì²­í¬ ë‚´ë¶€ ì—¬ë¶€</returns>
     public bool IsPositionInActiveChunk(Vector3 worldPosition)
     {
         Vector2Int chunkCoord = WorldToChunkCoords(worldPosition);
         return placedChunkCoordinates.Contains(chunkCoord);
     }
     /// <summary>
-    /// ÁÖ¾îÁø ¿ùµå ÁÂÇ¥°¡ È°¼º(¼³Ä¡µÈ) Ã»Å© ³»ºÎ¿¡ ÀÖ´ÂÁö È®ÀÎÇÏ±â À§ÇÑ ¸Ş¼­µå. (Vector3Int ¿À¹ö·Îµå)
+    /// ì£¼ì–´ì§„ ì›”ë“œ ì¢Œí‘œê°€ í™œì„±(ì„¤ì¹˜ëœ) ì²­í¬ ë‚´ë¶€ì— ìˆëŠ”ì§€ í™•ì¸í•˜ê¸° ìœ„í•œ ë©”ì„œë“œ. (Vector3Int ì˜¤ë²„ë¡œë“œ)
     /// </summary>
-    /// <param name="worldPosition">È®ÀÎÇÒ ¿ùµå ±×¸®µå ÁÂÇ¥ (Vector3Int)</param>
-    /// <returns>È°¼º Ã»Å© ³»ºÎ ¿©ºÎ</returns>
+    /// <param name="worldPosition">í™•ì¸í•  ì›”ë“œ ê·¸ë¦¬ë“œ ì¢Œí‘œ (Vector3Int)</param>
+    /// <returns>í™œì„± ì²­í¬ ë‚´ë¶€ ì—¬ë¶€</returns>
     public bool IsPositionInActiveChunk(Vector3Int worldPosition)
     {
         Vector2Int chunkCoord = WorldToChunkCoords(worldPosition);
@@ -152,7 +158,7 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// ¿ùµå ÁÂÇ¥(Vector3)¸¦ Ã»Å© ÁÂÇ¥(Vector2Int, XZ Æò¸é)·Î º¯È¯ÇÏ±â À§ÇÑ ¸Ş¼­µå.
+    /// ì›”ë“œ ì¢Œí‘œ(Vector3)ë¥¼ ì²­í¬ ì¢Œí‘œ(Vector2Int, XZ í‰ë©´)ë¡œ ë³€í™˜í•˜ê¸° ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
     public Vector2Int WorldToChunkCoords(Vector3 worldPosition)
     {
@@ -161,7 +167,7 @@ public class ChunkManager : Singleton<ChunkManager>
         return new Vector2Int(x, z);
     }
     /// <summary>
-    /// ¿ùµå ±×¸®µå ÁÂÇ¥(Vector3Int)¸¦ Ã»Å© ÁÂÇ¥(Vector2Int, XZ Æò¸é)·Î º¯È¯ÇÏ±â À§ÇÑ ¸Ş¼­µå.
+    /// ì›”ë“œ ê·¸ë¦¬ë“œ ì¢Œí‘œ(Vector3Int)ë¥¼ ì²­í¬ ì¢Œí‘œ(Vector2Int, XZ í‰ë©´)ë¡œ ë³€í™˜í•˜ê¸° ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
     public Vector2Int WorldToChunkCoords(Vector3Int worldPosition)
     {
@@ -171,19 +177,19 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// Ã»Å© ÁÂÇ¥(Vector2Int)¸¦ ÇØ´ç Ã»Å©ÀÇ ¿ùµå ±âÁØ À§Ä¡(Vector3, Y=-16)·Î º¯È¯ÇÏ±â À§ÇÑ ¸Ş¼­µå.
+    /// ì²­í¬ ì¢Œí‘œ(Vector2Int)ë¥¼ í•´ë‹¹ ì²­í¬ì˜ ì›”ë“œ ê¸°ì¤€ ìœ„ì¹˜(Vector3, Y=-16)ë¡œ ë³€í™˜í•˜ê¸° ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
     public Vector3 ChunkCoordsToWorldPosition(Vector2Int chunkCoord)
     {
         return new Vector3(chunkCoord.x * chunkSize, -16, chunkCoord.y * chunkSize);
     }
 
-    // --- ÀúÀå/·Îµå °ü·Ã ---
+    // --- ì €ì¥/ë¡œë“œ ê´€ë ¨ ---
 
     /// <summary>
-    /// ÇöÀç ¹èÄ¡µÈ ¸ğµç Ã»Å© Á¤º¸ ¹İÈ¯À» À§ÇÑ ¸Ş¼­µå (ÀúÀå¿ë).
+    /// í˜„ì¬ ë°°ì¹˜ëœ ëª¨ë“  ì²­í¬ ì •ë³´ ë°˜í™˜ì„ ìœ„í•œ ë©”ì„œë“œ (ì €ì¥ìš©).
     /// </summary>
-    /// <returns>ChunkSaveData ¸®½ºÆ®</returns>
+    /// <returns>ChunkSaveData ë¦¬ìŠ¤íŠ¸</returns>
     public List<ChunkSaveData> GetAllChunkSaveData()
     {
         List<ChunkSaveData> saveData = new List<ChunkSaveData>();
@@ -191,8 +197,8 @@ public class ChunkManager : Singleton<ChunkManager>
         {
             if (loadedChunks.TryGetValue(coord, out ChunkObject chunkObj))
             {
-                // TODO: ChunkObject.GetState() ±¸Çö ¹× ChunkSaveData¿¡ »óÅÂ ÀúÀå ·ÎÁ÷ ÇÊ¿ä.
-                saveData.Add(new ChunkSaveData(coord, chunkObj.Data.name)); // ÀÓ½Ã: ID¸¸ ÀúÀå
+                // TODO: ChunkObject.GetState() êµ¬í˜„ ë° ChunkSaveDataì— ìƒíƒœ ì €ì¥ ë¡œì§ í•„ìš”.
+                saveData.Add(new ChunkSaveData(coord, chunkObj.Data.name)); // ì„ì‹œ: IDë§Œ ì €ì¥
             }
         }
         Debug.LogWarning("GetAllChunkSaveData currently only saves coords & ID. ChunkStateData saving needed.");
@@ -200,28 +206,28 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// ÀúÀåµÈ µ¥ÀÌÅÍ·ÎºÎÅÍ Ã»Å© »óÅÂ º¹¿øÀ» À§ÇÑ ¸Ş¼­µå (·Îµå¿ë).
+    /// ì €ì¥ëœ ë°ì´í„°ë¡œë¶€í„° ì²­í¬ ìƒíƒœ ë³µì›ì„ ìœ„í•œ ë©”ì„œë“œ (ë¡œë“œìš©).
     /// </summary>
-    /// <param name="savedChunks">º¹¿øÇÒ ChunkSaveData ¸®½ºÆ®</param>
+    /// <param name="savedChunks">ë³µì›í•  ChunkSaveData ë¦¬ìŠ¤íŠ¸</param>
     public void RestoreAllChunks(List<ChunkSaveData> savedChunks)
     {
-        ClearAllChunks(); // º¹¿ø Àü ±âÁ¸ Ã»Å© ÃÊ±âÈ­
+        ClearAllChunks(); // ë³µì› ì „ ê¸°ì¡´ ì²­í¬ ì´ˆê¸°í™”
         if (savedChunks == null || savedChunks.Count == 0) return;
         Debug.Log($"Attempting to restore {savedChunks.Count} chunks...");
 
         foreach (var data in savedChunks)
         {
-            // DataManager¿¡¼­ ChunkItemData Ã£±â
+            // DataManagerì—ì„œ ChunkItemData ì°¾ê¸°
             ChunkItemData chunkItemData = DataManager.Instance?.GetChunkItemData(data.chunkItemId);
             if (chunkItemData != null)
             {
                 Vector3Int placementPos = Vector3Int.FloorToInt(ChunkCoordsToWorldPosition(data.chunkCoordinate));
-                if (IsPlacementValid(placementPos)) // ¹èÄ¡ Àü À¯È¿¼º °Ë»ç
+                if (IsPlacementValid(placementPos)) // ë°°ì¹˜ ì „ ìœ íš¨ì„± ê²€ì‚¬
                 {
-                    bool placed = PlaceChunk(chunkItemData, placementPos); // Ã»Å© ¹èÄ¡
+                    bool placed = PlaceChunk(chunkItemData, placementPos); // ì²­í¬ ë°°ì¹˜
                     if (placed && loadedChunks.TryGetValue(data.chunkCoordinate, out ChunkObject restoredChunk))
                     {
-                        // TODO: restoredChunk?.SetState(data.chunkState) È£Ãâ ·ÎÁ÷ ±¸Çö ÇÊ¿ä.
+                        // TODO: restoredChunk?.SetState(data.chunkState) í˜¸ì¶œ ë¡œì§ êµ¬í˜„ í•„ìš”.
                         Debug.LogWarning($"Need SetState in ChunkObject for {chunkItemData.name} at {data.chunkCoordinate}");
                     }
                 }
@@ -235,58 +241,58 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
     /// <summary>
-    /// ¸ğµç Ã»Å© Á¦°Å ¹× ÃÊ±âÈ­¸¦ À§ÇÑ ¸Ş¼­µå.
+    /// ëª¨ë“  ì²­í¬ ì œê±° ë° ì´ˆê¸°í™”ë¥¼ ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
     public void ClearAllChunks()
     {
-        if (placedChunkCoordinates.Count == 0 && loadedChunks.Count == 0) return; // ÀÌ¹Ì ºñ¾îÀÖÀ¸¸é ½ºÅµ
+        if (placedChunkCoordinates.Count == 0 && loadedChunks.Count == 0) return; // ì´ë¯¸ ë¹„ì–´ìˆìœ¼ë©´ ìŠ¤í‚µ
 
-        List<Vector2Int> coords = new List<Vector2Int>(placedChunkCoordinates); // º¹»ç ÈÄ ¼øÈ¸
+        List<Vector2Int> coords = new List<Vector2Int>(placedChunkCoordinates); // ë³µì‚¬ í›„ ìˆœíšŒ
         foreach (var coord in coords)
         {
-            RemoveChunk(Vector3Int.FloorToInt(ChunkCoordsToWorldPosition(coord))); // ÀÓ½Ã ÁÂÇ¥ º¯È¯ »ç¿ë
+            RemoveChunk(Vector3Int.FloorToInt(ChunkCoordsToWorldPosition(coord))); // ì„ì‹œ ì¢Œí‘œ ë³€í™˜ ì‚¬ìš©
         }
         Debug.Log("All chunks cleared.");
     }
 }
 
 
-// --- º¸Á¶ Å¬·¡½º ---
-// NOTE: º°µµ ÆÄÀÏ ºĞ¸® ±ÇÀå (ChunkObject.cs, ChunkSaveData.cs, ChunkStateData.cs).
+// --- ë³´ì¡° í´ë˜ìŠ¤ ---
+// NOTE: ë³„ë„ íŒŒì¼ ë¶„ë¦¬ ê¶Œì¥ (ChunkObject.cs, ChunkSaveData.cs, ChunkStateData.cs).
 
 /// <summary>
-/// ¿ùµå ¹èÄ¡ Ã»Å© ÇÁ¸®ÆÕ ·çÆ® ÄÄÆ÷³ÍÆ®¿ë Å¬·¡½º.
+/// ì›”ë“œ ë°°ì¹˜ ì²­í¬ í”„ë¦¬íŒ¹ ë£¨íŠ¸ ì»´í¬ë„ŒíŠ¸ìš© í´ë˜ìŠ¤.
 /// </summary>
 public class ChunkObject : MonoBehaviour
 {
     public Vector2Int Coordinate { get; private set; }
     public ChunkItemData Data { get; private set; }
-    // TODO: Ã»Å© °íÀ¯ »óÅÂ µ¥ÀÌÅÍ (ChunkStateData State) ÇÁ·ÎÆÛÆ¼ Ãß°¡ ÇÊ¿ä.
+    // TODO: ì²­í¬ ê³ ìœ  ìƒíƒœ ë°ì´í„° (ChunkStateData State) í”„ë¡œí¼í‹° ì¶”ê°€ í•„ìš”.
 
     /// <summary>
-    /// Ã»Å© ¿ÀºêÁ§Æ® ÃÊ±âÈ­¸¦ À§ÇÑ ¸Ş¼­µå.
+    /// ì²­í¬ ì˜¤ë¸Œì íŠ¸ ì´ˆê¸°í™”ë¥¼ ìœ„í•œ ë©”ì„œë“œ.
     /// </summary>
     public void Initialize(Vector2Int coordinate, ChunkItemData data)
     {
         this.Coordinate = coordinate;
         this.Data = data;
-        // TODO: »óÅÂ µ¥ÀÌÅÍ(State) °´Ã¼ »ı¼º ¹× ÃÊ±âÈ­ ·ÎÁ÷.
+        // TODO: ìƒíƒœ ë°ì´í„°(State) ê°ì²´ ìƒì„± ë° ì´ˆê¸°í™” ë¡œì§.
     }
 
-    // TODO: ÀúÀå/·Îµå À§ÇÑ »óÅÂ Get/Set °¡»ó ¸Ş¼­µå ±¸Çö ÇÊ¿ä (GetState, SetState).
+    // TODO: ì €ì¥/ë¡œë“œ ìœ„í•œ ìƒíƒœ Get/Set ê°€ìƒ ë©”ì„œë“œ êµ¬í˜„ í•„ìš” (GetState, SetState).
 }
 
 /// <summary>
-/// Ã»Å© ÀúÀå¿ë Á÷·ÄÈ­ °¡´É µ¥ÀÌÅÍ ±¸Á¶Ã¼.
+/// ì²­í¬ ì €ì¥ìš© ì§ë ¬í™” ê°€ëŠ¥ ë°ì´í„° êµ¬ì¡°ì²´.
 /// </summary>
 [System.Serializable]
 public class ChunkSaveData
 {
     public Vector2Int chunkCoordinate;
-    public string chunkItemId; // ChunkItemData ½Äº°¿ë ID (name µî).
-    // TODO: Ã»Å© °íÀ¯ »óÅÂ µ¥ÀÌÅÍ (ChunkStateData chunkState) ÇÊµå Ãß°¡ ÇÊ¿ä.
+    public string chunkItemId; // ChunkItemData ì‹ë³„ìš© ID (name ë“±).
+    // TODO: ì²­í¬ ê³ ìœ  ìƒíƒœ ë°ì´í„° (ChunkStateData chunkState) í•„ë“œ ì¶”ê°€ í•„ìš”.
 
-    // ÀÓ½Ã »ı¼ºÀÚ (»óÅÂ ¾øÀÌ ID¸¸)
+    // ì„ì‹œ ìƒì„±ì (ìƒíƒœ ì—†ì´ IDë§Œ)
     public ChunkSaveData(Vector2Int coord, string itemId)
     {
         chunkCoordinate = coord;
@@ -295,12 +301,12 @@ public class ChunkSaveData
 }
 
 /// <summary>
-/// [¹Ì±¸Çö] Ã»Å© °íÀ¯ »óÅÂ ÀúÀå/·Îµå¿ë Á÷·ÄÈ­ °¡´É µ¥ÀÌÅÍ Å¬·¡½º (ÇÊ¿ä½Ã Á¤ÀÇ).
+/// [ë¯¸êµ¬í˜„] ì²­í¬ ê³ ìœ  ìƒíƒœ ì €ì¥/ë¡œë“œìš© ì§ë ¬í™” ê°€ëŠ¥ ë°ì´í„° í´ë˜ìŠ¤ (í•„ìš”ì‹œ ì •ì˜).
 /// </summary>
 [System.Serializable]
 public class ChunkStateData
 {
-    // TODO: ÇÊ¿äÇÑ »óÅÂ º¯¼ö Á¤ÀÇ (¿¹: ¾÷±×·¹ÀÌµå ·¹º§, Æ¯¼ö È¿°ú È°¼º ¿©ºÎ).
+    // TODO: í•„ìš”í•œ ìƒíƒœ ë³€ìˆ˜ ì •ì˜ (ì˜ˆ: ì—…ê·¸ë ˆì´ë“œ ë ˆë²¨, íŠ¹ìˆ˜ íš¨ê³¼ í™œì„± ì—¬ë¶€).
     // public int upgradeLevel;
     // public bool isSpecialEffectActive;
 }

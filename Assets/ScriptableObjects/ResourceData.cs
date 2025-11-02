@@ -3,25 +3,29 @@
 using UnityEngine;
 
 /// <summary>
-/// GDD 4.4.2 - ¸ğµç ÀÚ¿ø(¾ÆÀÌÅÛ, ¾×Ã¼, ±âÃ¼ µî)ÀÇ ±âº»ÀÌ µÇ´Â Ãß»ó Å¬·¡½ºÀÔ´Ï´Ù.
-/// DataManager°¡ ID·Î Á¢±ÙÇÒ ¼ö ÀÖµµ·Ï IDataWithId ÀÎÅÍÆäÀÌ½º¸¦ ±¸ÇöÇÕ´Ï´Ù.
+    [Header("Resource Info")]
+    [Tooltip("Display name shown in UI lists")]
+    public string resourceName;
+
+/// GDD 4.4.2 - ëª¨ë“  ìì›(ì•„ì´í…œ, ì•¡ì²´, ê¸°ì²´ ë“±)ì˜ ê¸°ë³¸ì´ ë˜ëŠ” ì¶”ìƒ í´ë˜ìŠ¤ì…ë‹ˆë‹¤.
+/// DataManagerê°€ IDë¡œ ì ‘ê·¼í•  ìˆ˜ ìˆë„ë¡ IDataWithId ì¸í„°í˜ì´ìŠ¤ë¥¼ êµ¬í˜„í•©ë‹ˆë‹¤.
 /// </summary>
 public abstract class ResourceData : ScriptableObject, IDataWithId
 {
     [Header("Data ID")]
-    [Tooltip("DataManager¿¡¼­ ÀÌ µ¥ÀÌÅÍ¸¦ Ã£±â À§ÇÑ °íÀ¯ ID")]
+    [Tooltip("DataManagerì—ì„œ ì´ ë°ì´í„°ë¥¼ ì°¾ê¸° ìœ„í•œ ê³ ìœ  ID")]
     public string id;
 
-    // DataManagerÀÇ IDataWithId ÀÎÅÍÆäÀÌ½º ±¸Çö
+    // DataManagerì˜ IDataWithId ì¸í„°í˜ì´ìŠ¤ êµ¬í˜„
     public string ID => id;
 
     [Header("UI Display")]
-    [Tooltip("UI¿¡ Ç¥½ÃµÉ ÀÌ¸§ (GDD 4.6.4)")]
+    [Tooltip("UIì— í‘œì‹œë  ì´ë¦„ (GDD 4.6.4)")]
     public string displayName;
 
-    [Tooltip("UI(ÀÎº¥Åä¸®, ÇÖ¹Ù µî)¿¡ Ç¥½ÃµÉ ¾ÆÀÌÄÜ (GDD 4.6.4)")]
+    [Tooltip("UI(ì¸ë²¤í† ë¦¬, í•«ë°” ë“±)ì— í‘œì‹œë  ì•„ì´ì½˜ (GDD 4.6.4)")]
     public Sprite icon;
 
     [TextArea]
-    public string description; // UI ÅøÆÁ¿ë ¼³¸í
+    public string description; // UI íˆ´íŒìš© ì„¤ëª…
 }

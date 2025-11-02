@@ -1,41 +1,49 @@
+using System;
 using UnityEngine;
-using UnityEngine.UI; // Image ÄÄÆ÷³ÍÆ® »ç¿ë
-using TMPro; // TextMeshProUGUI ÄÄÆ÷³ÍÆ® »ç¿ë
+using UnityEngine.UI; // Image ì»´í¬ë„ŒíŠ¸ ì‚¬ìš©
+using TMPro; // TextMeshProUGUI ì»´í¬ë„ŒíŠ¸ ì‚¬ìš©
 
 /// <summary>
-/// UI ¹öÆ°¿¡ ¾ÆÀÌÅÛ(BuildingItemData Æ÷ÇÔ)ÀÇ Á¤º¸¸¦ Ç¥½ÃÇÏ´Â ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
-/// ¹öÆ° ÇÁ¸®ÆÕ¿¡ ÀÌ ½ºÅ©¸³Æ®¸¦ Ãß°¡ÇÏ°í, ÇÏÀ§ UI ¿ä¼ÒµéÀ» ¿¬°áÇØÁÖ¼¼¿ä.
+/// UI ë²„íŠ¼ì— ì•„ì´í…œ(BuildingItemData í¬í•¨)ì˜ ì •ë³´ë¥¼ í‘œì‹œí•˜ëŠ” ìŠ¤í¬ë¦½íŠ¸ì…ë‹ˆë‹¤.
+/// ë²„íŠ¼ í”„ë¦¬íŒ¹ì— ì´ ìŠ¤í¬ë¦½íŠ¸ë¥¼ ì¶”ê°€í•˜ê³ , í•˜ìœ„ UI ìš”ì†Œë“¤ì„ ì—°ê²°í•´ì£¼ì„¸ìš”.
 /// </summary>
 public class ItemButtonUI : MonoBehaviour
 {
     [Header("UI Element References")]
-    [Tooltip("¾ÆÀÌÅÛ ¾ÆÀÌÄÜÀ» Ç¥½ÃÇÒ Image ÄÄÆ÷³ÍÆ®")]
+    [Tooltip("ì•„ì´í…œ ì•„ì´ì½˜ì„ í‘œì‹œí•  Image ì»´í¬ë„ŒíŠ¸")]
     [SerializeField] private Image itemIcon;
 
-    [Tooltip("¾ÆÀÌÅÛ ÀÌ¸§À» Ç¥½ÃÇÒ TextMeshProUGUI ÄÄÆ÷³ÍÆ®")]
+    [Tooltip("ì•„ì´í…œ ì´ë¦„ì„ í‘œì‹œí•  TextMeshProUGUI ì»´í¬ë„ŒíŠ¸")]
     [SerializeField] private TextMeshProUGUI itemNameText;
 
-    [Tooltip("¾ÆÀÌÅÛ ¼ö·®À» Ç¥½ÃÇÒ TextMeshProUGUI ÄÄÆ÷³ÍÆ® (¾ø¾îµµ µÊ)")]
+    [Tooltip("ì•„ì´í…œ ìˆ˜ëŸ‰ì„ í‘œì‹œí•  TextMeshProUGUI ì»´í¬ë„ŒíŠ¸ (ì—†ì–´ë„ ë¨)")]
     [SerializeField] private TextMeshProUGUI itemQuantityText;
 
     /// <summary>
-    /// ItemData(BuildingItemData Æ÷ÇÔ)¿Í ¼ö·®À¸·Î ¹öÆ° UI¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+    /// ItemData(BuildingItemData í¬í•¨)ì™€ ìˆ˜ëŸ‰ìœ¼ë¡œ ë²„íŠ¼ UIë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
     /// </summary>
-    /// <param name="itemData">Ç¥½ÃÇÒ ¾ÆÀÌÅÛ µ¥ÀÌÅÍ (BuildingItemData °¡´É)</param>
-    /// <param name="quantity">Ç¥½ÃÇÒ ¼ö·® (-1 ÀÌ°Å³ª ¾øÀ¸¸é ¼ö·® ÅØ½ºÆ® ¼û±è)</param>
+    /// <param name="itemData">í‘œì‹œí•  ì•„ì´í…œ ë°ì´í„° (BuildingItemData ê°€ëŠ¥)</param>
+    /// <param name="quantity">í‘œì‹œí•  ìˆ˜ëŸ‰ (-1 ì´ê±°ë‚˜ ì—†ìœ¼ë©´ ìˆ˜ëŸ‰ í…ìŠ¤íŠ¸ ìˆ¨ê¹€)</param>
     public void Setup(ItemData itemData, int quantity = -1)
     {
         if (itemData == null)
         {
             Debug.LogWarning("Setup called with null ItemData.", this.gameObject);
-            // ±âº» ÀÌ¹ÌÁö/ÅØ½ºÆ® ¼³Á¤ ¶Ç´Â ºñÈ°¼ºÈ­
+            string displayLabel = itemData.resourceName;
+            if (string.IsNullOrWhiteSpace(displayLabel))
+            {
+                displayLabel = !string.IsNullOrWhiteSpace(itemData.displayName)
+                    ? itemData.displayName
+                    : itemData.name;
+            }
+            itemNameText.text = displayLabel;
             if (itemIcon != null) itemIcon.enabled = false;
             if (itemNameText != null) itemNameText.text = "???";
             if (itemQuantityText != null) itemQuantityText.gameObject.SetActive(false);
             return;
         }
 
-        // ¾ÆÀÌÄÜ ¼³Á¤ (ItemData¿¡ icon ÇÊµå°¡ ÀÖ´Ù°í °¡Á¤)
+        // ì•„ì´ì½˜ ì„¤ì • (ItemDataì— icon í•„ë“œê°€ ìˆë‹¤ê³  ê°€ì •)
         if (itemIcon != null)
         {
             if (itemData.icon != null)
@@ -45,23 +53,23 @@ public class ItemButtonUI : MonoBehaviour
             }
             else
             {
-                itemIcon.enabled = false; // ¾ÆÀÌÄÜ ¾øÀ¸¸é ºñÈ°¼ºÈ­
+                itemIcon.enabled = false; // ì•„ì´ì½˜ ì—†ìœ¼ë©´ ë¹„í™œì„±í™”
                 Debug.LogWarning($"ItemData '{itemData.name}' is missing an icon.", this.gameObject);
             }
         }
 
-        // ÀÌ¸§ ¼³Á¤ (ItemData¿¡ itemName ÇÊµå°¡ ÀÖ´Ù°í °¡Á¤)
+        // ì´ë¦„ ì„¤ì • (ItemDataì— itemName í•„ë“œê°€ ìˆë‹¤ê³  ê°€ì •)
         if (itemNameText != null)
         {
             itemNameText.text = itemData.resourceName;
         }
 
-        // ¼ö·® ¼³Á¤
+        // ìˆ˜ëŸ‰ ì„¤ì •
         if (itemQuantityText != null)
         {
-            // BuildingItemData´Â º¸Åë ¼ö·® Ç¥½Ã°¡ ÇÊ¿ä ¾øÀ» ¼ö ÀÖÀ½ (¼±ÅÃ »çÇ×)
-            // bool showQuantity = quantity > 0 && !(itemData is BuildingItemData); // °Ç¹° ¾ÆÀÌÅÛÀÌ¸é ¼ö·® ¼û±â±â
-            bool showQuantity = quantity > 0; // ÀÏ´Ü ¸ğµç ¾ÆÀÌÅÛ ¼ö·® Ç¥½Ã
+            // BuildingItemDataëŠ” ë³´í†µ ìˆ˜ëŸ‰ í‘œì‹œê°€ í•„ìš” ì—†ì„ ìˆ˜ ìˆìŒ (ì„ íƒ ì‚¬í•­)
+            // bool showQuantity = quantity > 0 && !(itemData is BuildingItemData); // ê±´ë¬¼ ì•„ì´í…œì´ë©´ ìˆ˜ëŸ‰ ìˆ¨ê¸°ê¸°
+            bool showQuantity = quantity > 0; // ì¼ë‹¨ ëª¨ë“  ì•„ì´í…œ ìˆ˜ëŸ‰ í‘œì‹œ
             itemQuantityText.gameObject.SetActive(showQuantity);
             if (showQuantity)
             {
@@ -70,6 +78,6 @@ public class ItemButtonUI : MonoBehaviour
         }
     }
 
-    // BlockData¸¦ ¹Ş´Â Setup ÇÔ¼ö´Â ´õ ÀÌ»ó ÇÊ¿ä ¾øÀ¸¹Ç·Î »èÁ¦ÇÕ´Ï´Ù.
+    // BlockDataë¥¼ ë°›ëŠ” Setup í•¨ìˆ˜ëŠ” ë” ì´ìƒ í•„ìš” ì—†ìœ¼ë¯€ë¡œ ì‚­ì œí•©ë‹ˆë‹¤.
     // public void Setup(BlockData blockData) { ... }
 }

@@ -44,14 +44,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2092e2f6479d9c246ba06ff8bea86db8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hudPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  mainMenuPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  loadingScreenPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  pauseMenuPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  buildMenuPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  chunkInventoryPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  chunkCreationPanel: {fileID: 4982751334142974300, guid: 455513e828441174391701ead1bfa93f, type: 3}
-  loadingProgressBar: {fileID: 7834644894500540347, guid: dc4f03b622b7e0047a348bb9aa6feccf, type: 3}
+  hudPanel: {fileID: 0}
+  mainMenuPanel: {fileID: 0}
+  loadingScreenPanel: {fileID: 0}
+  pauseMenuPanel: {fileID: 0}
+  buildMenuPanel: {fileID: 0}
+  chunkInventoryPanel: {fileID: 0}
+  chunkCreationPanel: {fileID: 0}
+  loadingProgressBar: {fileID: 0}
   buildItemListContainer: {fileID: 0}
   buildItemButtonPrefab: {fileID: 0}
   chunkItemListContainer: {fileID: 0}
